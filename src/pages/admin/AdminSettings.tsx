@@ -68,7 +68,7 @@ const AdminSettings = () => {
         return;
       }
 
-      // Update password
+      // Update password directly
       const { error } = await supabase
         .from("admin_settings")
         .update({ value: newPassword })

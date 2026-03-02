@@ -20,21 +20,11 @@ export const AdminPasswordGate = ({ children }: AdminPasswordGateProps) => {
   const [sendingReset, setSendingReset] = useState(false);
 
   useEffect(() => {
-    // Check if already authenticated via Supabase session with admin role
-    const checkAuth = async () => {
-      const isAuth = sessionStorage.getItem(SESSION_KEY);
-      if (isAuth === "true") {
-        // Verify we still have a valid Supabase session
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          setAuthenticated(true);
-        } else {
-          sessionStorage.removeItem(SESSION_KEY);
-        }
-      }
-      setLoading(false);
-    };
-    checkAuth();
+    const isAuth = sessionStorage.getItem(SESSION_KEY);
+    if (isAuth === "true") {
+      setAuthenticated(true);
+    }
+    setLoading(false);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,30 +33,21 @@ export const AdminPasswordGate = ({ children }: AdminPasswordGateProps) => {
     setChecking(true);
 
     try {
-      // Call edge function to verify password and get admin session
-      const { data, error: fnError } = await supabase.functions.invoke("admin-login", {
-        body: { password },
-      });
+      const { data, error: dbError } = await supabase
+        .from("admin_settings")
+        .select("value")
+        .eq("key", "admin_password")
+        .single();
 
-      if (fnError) throw fnError;
+      if (dbError) throw dbError;
 
-      if (data?.error) {
-        setError(data.error === "Invalid password" ? "Incorrect password" : data.error);
+      if (!data || password !== data.value) {
+        setError("Incorrect password");
         return;
       }
 
-      if (data?.session) {
-        // Set the admin session in Supabase client
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
-        
-        sessionStorage.setItem(SESSION_KEY, "true");
-        setAuthenticated(true);
-      } else {
-        setError("Login failed. Try again.");
-      }
+      sessionStorage.setItem(SESSION_KEY, "true");
+      setAuthenticated(true);
     } catch (err: any) {
       console.error(err);
       setError("Failed to verify. Try again.");
@@ -78,19 +59,23 @@ export const AdminPasswordGate = ({ children }: AdminPasswordGateProps) => {
   const handleForgotPassword = async () => {
     setSendingReset(true);
     try {
-      const { data, error } = await supabase.functions.invoke("send-admin-password");
+      const { data, error } = await supabase.functions.invoke("admin-forgot-password");
       
       if (error) throw error;
       
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
       toast({
-        title: "Password Sent!",
-        description: "Password has been sent to d***@gmail.com",
+        title: "Reset Link Sent!",
+        description: "Password reset link has been sent to admin email.",
       });
     } catch (err: any) {
       console.error(err);
       toast({
         title: "Error",
-        description: "Failed to send password. Try again later.",
+        description: "Failed to send reset link. Try again later.",
         variant: "destructive",
       });
     } finally {

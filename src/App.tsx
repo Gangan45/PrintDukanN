@@ -59,6 +59,7 @@ import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
 import NamePencilCategory from "./pages/NamePencilCategory";
 import NamePencilCustomize from "./pages/NamePencilCustomize";
+import AdminResetPassword from "./pages/admin/AdminResetPassword";
 
 
 const queryClient = new QueryClient();
@@ -111,6 +112,7 @@ const App = () => (
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/admin/reset-password" element={<AdminResetPassword />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/corporate-gift/customize/:id" element={<CorporateGiftDetail />} />
               
