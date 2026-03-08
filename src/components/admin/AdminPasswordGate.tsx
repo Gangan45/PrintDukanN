@@ -65,11 +65,12 @@ export const AdminPasswordGate = ({ children }: AdminPasswordGateProps) => {
   const handleForgotPassword = async () => {
     setForgotLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(ADMIN_EMAIL, {
-        redirectTo: "https://printdukan.in/reset-password",
+      const { data, error } = await supabase.functions.invoke("send-admin-reset-email", {
+        body: { action: "send-reset" },
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success("Password reset link sent to your email!");
     } catch (err: any) {
       toast.error(err.message || "Failed to send reset email");
