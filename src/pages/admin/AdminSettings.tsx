@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Save, Store, Mail, CreditCard, Truck, Bell } from "lucide-react";
+import { Save, Store, Mail, CreditCard, Truck, Bell, KeyRound, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminSettings = () => {
   const [storeSettings, setStoreSettings] = useState({
@@ -26,12 +27,63 @@ const AdminSettings = () => {
     newCustomer: false,
   });
 
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPasswords, setShowPasswords] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
   const handleSaveStore = () => {
     toast({ title: "Saved", description: "Store settings updated successfully" });
   };
 
   const handleSaveNotifications = () => {
     toast({ title: "Saved", description: "Notification preferences updated" });
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword.length < 4) {
+      toast({ title: "Error", description: "New password must be at least 4 characters", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Error", description: "New passwords do not match", variant: "destructive" });
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      // Verify current password first
+      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+        email: "deshmukhgagan45@gmail.com",
+        password: currentPassword,
+      });
+
+      if (loginError) {
+        toast({ title: "Error", description: "Current password is incorrect", variant: "destructive" });
+        setPasswordLoading(false);
+        return;
+      }
+
+      // Update password via Supabase Auth
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (updateError) throw updateError;
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      toast({ title: "Success", description: "Password changed successfully!" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to change password", variant: "destructive" });
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   return (
@@ -42,10 +94,14 @@ const AdminSettings = () => {
       </div>
 
       <Tabs defaultValue="store" className="space-y-6">
-        <TabsList className="bg-muted/50">
+        <TabsList className="bg-muted/50 flex-wrap">
           <TabsTrigger value="store" className="gap-2">
             <Store className="h-4 w-4" />
             Store
+          </TabsTrigger>
+          <TabsTrigger value="password" className="gap-2">
+            <KeyRound className="h-4 w-4" />
+            Password
           </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="h-4 w-4" />
@@ -117,6 +173,71 @@ const AdminSettings = () => {
                 <Save className="h-4 w-4" />
                 Save Changes
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="password">
+          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle>Change Admin Password</CardTitle>
+              <CardDescription>Update your admin panel login password</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="currentPassword"
+                      type={showPasswords ? "text" : "password"}
+                      placeholder="Enter current password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="pr-10"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(!showPasswords)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <Input
+                    id="newPassword"
+                    type={showPasswords ? "text" : "password"}
+                    placeholder="Enter new password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={4}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type={showPasswords ? "text" : "password"}
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={4}
+                  />
+                </div>
+
+                <Button type="submit" disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword} className="gap-2">
+                  {passwordLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                  Change Password
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </TabsContent>

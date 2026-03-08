@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const TOKEN_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+const TOKEN_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -34,9 +34,13 @@ serve(async (req) => {
       const resetToken = crypto.randomUUID();
       const tokenData = JSON.stringify({ token: resetToken, created_at: Date.now() });
       
-      await supabase
+      const { error: upsertError } = await supabase
         .from("admin_settings")
-        .upsert({ key: "admin_reset_token", value: tokenData, updated_at: new Date().toISOString() });
+        .upsert({ key: "admin_reset_token", value: tokenData, updated_at: new Date().toISOString() }, { onConflict: "key" });
+      
+      if (upsertError) {
+        console.error("Upsert error:", upsertError);
+      }
 
       const resetLink = `https://printdukan.in/admin-reset-password?token=${resetToken}`;
 
@@ -57,7 +61,7 @@ serve(async (req) => {
                 <p>You requested a password reset for your PrintDukan Admin Panel.</p>
                 <a href="${resetLink}" style="display:inline-block;background:#E53E3E;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0;">Reset Password</a>
                 <p style="color:#666;font-size:13px;">If you didn't request this, you can ignore this email.</p>
-                <p style="color:#E53E3E;font-size:13px;font-weight:bold;">⏰ This link will expire in 5 minutes.</p>
+                <p style="color:#E53E3E;font-size:13px;font-weight:bold;">⏰ This link will expire in 30 minutes.</p>
               </div>
             `,
           }),
@@ -112,7 +116,7 @@ serve(async (req) => {
     if (action === "reset-password") {
       const valid = await validateToken(token);
       if (!valid) {
-        return new Response(JSON.stringify({ error: "Invalid or expired token (5 min limit)" }), {
+        return new Response(JSON.stringify({ error: "Invalid or expired token (30 min limit)" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -120,12 +124,12 @@ serve(async (req) => {
 
       await supabase
         .from("admin_settings")
-        .upsert({ key: "admin_password", value: newPassword, updated_at: new Date().toISOString() });
+        .upsert({ key: "admin_password", value: newPassword, updated_at: new Date().toISOString() }, { onConflict: "key" });
 
       // Clear token
       await supabase
         .from("admin_settings")
-        .upsert({ key: "admin_reset_token", value: "", updated_at: new Date().toISOString() });
+        .upsert({ key: "admin_reset_token", value: "", updated_at: new Date().toISOString() }, { onConflict: "key" });
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

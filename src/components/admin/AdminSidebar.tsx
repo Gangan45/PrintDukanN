@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, ShoppingCart, FolderTree, Settings, ArrowLeft, Users, Warehouse, Ticket, Star, FileStack, Film, ImageIcon, Youtube, Sparkles, Pencil, BadgePercent, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FolderTree, Settings, ArrowLeft, Users, Warehouse, Ticket, Star, FileStack, Film, ImageIcon, Youtube, Sparkles, Pencil, BadgePercent, BarChart3, LogOut } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const menuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
@@ -31,9 +33,17 @@ const menuItems = [
   { title: "Special Offers", url: "/admin/special-offers", icon: BadgePercent },
   { title: "Homepage Stats", url: "/admin/stats", icon: BarChart3 },
   { title: "Customers", url: "/admin/customers", icon: Users },
+  { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
 export function AdminSidebar() {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    sessionStorage.removeItem("admin_authenticated");
+    toast.success("Logged out successfully!");
+    window.location.href = "/admin";
+  };
+
   return (
     <Sidebar className="border-r border-border/50">
       <SidebarHeader className="p-3 sm:p-4 border-b border-border/50">
@@ -70,12 +80,20 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-3 sm:p-4 border-t border-border/50">
+      <SidebarFooter className="p-3 sm:p-4 border-t border-border/50 space-y-2">
         <Button variant="ghost" className="w-full justify-start gap-2 h-9 text-sm" asChild>
           <Link to="/">
             <ArrowLeft className="h-4 w-4" />
             Back to Store
           </Link>
+        </Button>
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start gap-2 h-9 text-sm text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4" />
+          Logout
         </Button>
       </SidebarFooter>
     </Sidebar>
