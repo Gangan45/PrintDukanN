@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { FloatingWhatsApp } from "@/components/layout/FloatingWhatsApp";
 import { AuthModalProvider } from "@/contexts/AuthModalContext";
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -154,6 +155,7 @@ const App = () => (
             <FloatingWhatsApp />
           </AuthModalProvider>
         </BrowserRouter>
+        <SpeedInsights />
       </TooltipProvider>
     </QueryClientProvider>
   </HelmetProvider>
