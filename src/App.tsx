@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { FloatingWhatsApp } from "@/components/layout/FloatingWhatsApp";
 import { AuthModalProvider } from "@/contexts/AuthModalContext";
 import Index from "./pages/Index";
@@ -154,6 +155,7 @@ const App = () => (
             <FloatingWhatsApp />
           </AuthModalProvider>
         </BrowserRouter>
+        <SpeedInsights />
       </TooltipProvider>
     </QueryClientProvider>
   </HelmetProvider>
