@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Package, MapPin, CreditCard, Check, Tag, X, Loader2, Wallet } from "lucide-react";
 import { AvailableCoupons } from "@/components/cart/AvailableCoupons";
+import { CustomDesignPreview } from "@/components/cart/CustomDesignPreview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -671,19 +672,21 @@ const Checkout = () => {
                 <div className="space-y-3 max-h-48 sm:max-h-60 overflow-y-auto pr-1">
                   {checkoutItems.map((item) => (
                     <div key={item.id} className="flex gap-3 p-2 bg-muted/30 rounded-xl">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-muted rounded-lg overflow-hidden flex-shrink-0">
-                        <img
-                          src={getDisplayImage(item)}
-                          alt={item.product_name || "Product"}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                      <CustomDesignPreview
+                        productImage={getDisplayImage(item)}
+                        customImageUrl={item.custom_image_url}
+                        alt={item.product_name || "Product"}
+                        className="w-14 h-14 sm:w-16 sm:h-16"
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{item.product_name || "Custom Product"}</p>
                         <div className="flex flex-wrap gap-x-2 text-xs text-muted-foreground mt-0.5">
                           {item.selected_size && <span>Size: {item.selected_size}</span>}
                           {item.selected_frame && <span>Frame: {item.selected_frame}</span>}
                         </div>
+                        {item.custom_image_url && (
+                          <p className="text-[10px] text-primary mt-0.5">Tap photo to preview design</p>
+                        )}
                         <p className="text-sm font-semibold mt-1 text-primary">
                           ₹{item.unit_price.toLocaleString()} × {item.quantity}
                         </p>

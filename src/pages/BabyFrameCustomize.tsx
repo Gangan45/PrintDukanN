@@ -10,7 +10,7 @@ import { useCart } from "@/hooks/useCart";
 import { useBuyNow } from "@/hooks/useBuyNow";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { ReviewsAndSuggestions } from "@/components/product/ReviewsAndSuggestions";
+import { ProductDetailsBlock } from "@/components/product/ProductDetailsBlock";
 import { ProductDetailSkeleton } from "@/components/skeletons";
 import {
   ChevronRight,
@@ -655,10 +655,9 @@ export default function BabyFrameCustomize() {
           </div>
         </div>
 
-        {/* Reviews and Related Products */}
-        <ReviewsAndSuggestions 
-          productId={id || "baby-birth-frame"} 
-          category="Baby Frames" 
+        <ProductDetailsBlock
+          productId={id || "baby-birth-frame"}
+          category="Baby Frames"
         />
       </main>
 

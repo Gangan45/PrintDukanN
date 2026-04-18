@@ -17,7 +17,7 @@ import { useBuyNow } from "@/hooks/useBuyNow";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getVariantImages, parseVariantImages, VariantImages } from "@/lib/variantImages";
-import { ReviewsAndSuggestions } from "@/components/product/ReviewsAndSuggestions";
+import { ProductDetailsBlock } from "@/components/product/ProductDetailsBlock";
 import { ProductDetailSkeleton } from "@/components/skeletons";
 
 interface ProductSize {
@@ -902,13 +902,11 @@ const WallClockCustomize = () => {
         </div>
       </section>
 
-      {/* Reviews and Related Products */}
-      <div className="container mx-auto px-3 sm:px-4">
-        <ReviewsAndSuggestions 
-          productId={id || "default-wall-clock"} 
-          category="Wall Clocks" 
-        />
-      </div>
+      <ProductDetailsBlock
+        productId={id || "default-wall-clock"}
+        category="Wall Clocks"
+        description={product?.description}
+      />
 
       <Footer />
     </div>

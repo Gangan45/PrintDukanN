@@ -14,7 +14,7 @@ import { getVariantImages, parseVariantImages, VariantImages } from "@/lib/varia
 import { ProductDetailSkeleton } from "@/components/skeletons";
 import Magenticbadge from "@/assets/A_Content_Desktop_-_2025-09-30T182434.699.webp"
 import orderblue from "@/assets/Processing_-_Desktop_1.webp";
-import { ReviewsAndSuggestions } from "@/components/product/ReviewsAndSuggestions";
+import { ProductDetailsBlock } from "@/components/product/ProductDetailsBlock";
 
 interface ProductSize {
   name: string;
@@ -537,11 +537,12 @@ const MagneticBadgeCustomize = () => {
           </div>
         </div>
       </section>
-      <ReviewsAndSuggestions 
-                productId={id || "default-magnetic-badge"} 
-                category="wedding-card" 
-              />
-      
+      <ProductDetailsBlock
+        productId={id || "default-magnetic-badge"}
+        category="magnetic-badges"
+        description={product?.description}
+      />
+
       <Footer />
     </div>
   );

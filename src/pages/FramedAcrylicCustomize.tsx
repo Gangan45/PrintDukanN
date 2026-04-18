@@ -30,6 +30,7 @@ import { useCart } from "@/hooks/useCart";
 import { useBuyNow } from "@/hooks/useBuyNow";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductDetailSkeleton } from "@/components/skeletons";
+import { ProductDetailsBlock } from "@/components/product/ProductDetailsBlock";
 
 // Frame color options matching OMGS reference
 const frameColors = [
@@ -718,6 +719,11 @@ const FramedAcrylicCustomize = () => {
           </div>
         </div>
       </main>
+
+      <ProductDetailsBlock
+        productId={id || "default-framed-acrylic"}
+        category="Framed Acrylic Photo"
+      />
 
       <Footer />
     </div>

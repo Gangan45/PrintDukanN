@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { ProductDetailsBlock } from "@/components/product/ProductDetailsBlock";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -404,6 +405,11 @@ const NamePencilCustomize = () => {
             </div>
           </div>
         </div>
+        <ProductDetailsBlock
+          productId={id || "default-name-pencil"}
+          category="Name Pencils"
+          description={product?.description}
+        />
       </main>
       <Footer />
     </>

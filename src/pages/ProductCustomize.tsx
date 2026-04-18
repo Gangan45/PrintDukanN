@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Canvas as FabricCanvas, FabricImage } from "fabric";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { ProductDetailsBlock } from "@/components/product/ProductDetailsBlock";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -1543,6 +1544,12 @@ const ProductCustomize = () => {
           </div>
         )}
       </main>
+
+      <ProductDetailsBlock
+        productId={product.id}
+        category={product.category}
+        description={product.description}
+      />
 
       <Footer />
     </div>

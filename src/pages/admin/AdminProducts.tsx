@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Edit, Trash2, Eye, Upload, X, Package, Image as ImageIcon, Palette, Ruler, Images } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye, Upload, X, Package, Image as ImageIcon, Palette, Ruler, Images, Wand2, Loader2, Sparkles, Move, Wand } from "lucide-react";
+import SlotEditor, { type PhotoSlot } from "@/components/admin/SlotEditor";
+import CustomizableDesignEditor, { type DesignLayer } from "@/components/admin/CustomizableDesignEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -227,6 +229,82 @@ const AdminProducts = () => {
   // Variant images state
   const [variantImagesProduct, setVariantImagesProduct] = useState<Product | null>(null);
   const [variantImages, setVariantImages] = useState<Record<string, string[]>>({});
+  // AI slot detection state
+  const [detectingSlotsId, setDetectingSlotsId] = useState<string | null>(null);
+  const [bulkDetecting, setBulkDetecting] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  // Slot editor state
+  const [slotEditorProduct, setSlotEditorProduct] = useState<Product | null>(null);
+
+  const handleDetectSlots = async (product: Product) => {
+    const imageUrl = product.images?.[0];
+    if (!imageUrl) {
+      toast({ title: "No image", description: "Upload a product image first.", variant: "destructive" });
+      return;
+    }
+    setDetectingSlotsId(product.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("detect-photo-slots", {
+        body: { productId: product.id, imageUrl },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const count = (data as any)?.count ?? 0;
+      toast({
+        title: count > 0 ? "Slots detected!" : "No slots found",
+        description: count > 0
+          ? `Detected ${count} photo slot${count > 1 ? "s" : ""}. Customers can now upload photos.`
+          : "AI couldn't find clear placeholder areas. Try a clearer template image.",
+      });
+      fetchProducts();
+    } catch (e: any) {
+      toast({ title: "Detection failed", description: e.message || "Try again.", variant: "destructive" });
+    } finally {
+      setDetectingSlotsId(null);
+    }
+  };
+
+  const handleBulkDetectSlots = async () => {
+    // Find acrylic products without slots that have an image
+    const targets = products.filter((p) => {
+      const isAcrylic = p.category?.toLowerCase().includes("acrylic");
+      const hasImage = (p.images?.length ?? 0) > 0;
+      const slots = (p as any).photo_slots;
+      const hasSlots = Array.isArray(slots) && slots.length > 0;
+      return isAcrylic && hasImage && !hasSlots;
+    });
+    if (targets.length === 0) {
+      toast({ title: "Nothing to do", description: "All acrylic products already have slots." });
+      return;
+    }
+    setBulkDetecting(true);
+    setBulkProgress({ done: 0, total: targets.length });
+    let success = 0;
+    let failed = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const p = targets[i];
+      try {
+        const { data, error } = await supabase.functions.invoke("detect-photo-slots", {
+          body: { productId: p.id, imageUrl: p.images![0] },
+        });
+        if (error || (data as any)?.error) failed++;
+        else success++;
+      } catch {
+        failed++;
+      }
+      setBulkProgress({ done: i + 1, total: targets.length });
+      // 1.5s delay to avoid AI rate limits
+      if (i < targets.length - 1) await new Promise((r) => setTimeout(r, 1500));
+    }
+    setBulkDetecting(false);
+    setBulkProgress(null);
+    toast({
+      title: "Bulk detection complete",
+      description: `${success} succeeded, ${failed} failed out of ${targets.length}.`,
+    });
+    fetchProducts();
+  };
+
   const [selectedColorForImages, setSelectedColorForImages] = useState("");
   const [newVariantImageUrl, setNewVariantImageUrl] = useState("");
   
@@ -237,7 +315,14 @@ const AdminProducts = () => {
     base_price: "",
     is_customizable: true,
     is_active: true,
+    tags: [] as string[],
   });
+
+  // Customizable design editor state
+  const [designEditorOpen, setDesignEditorOpen] = useState(false);
+  const [designLayers, setDesignLayers] = useState<DesignLayer[]>([]);
+  const [designTemplateUrl, setDesignTemplateUrl] = useState<string | null>(null);
+  const [designPhotoSlots, setDesignPhotoSlots] = useState<any[]>([]);
   // Magnetic Badge shapes (prices are 0 as they don't affect pricing)
   const defaultMagneticBadgeShapes = [
     { name: "Logo Cutout", price: 0 },
@@ -408,6 +493,7 @@ const AdminProducts = () => {
       base_price: "",
       is_customizable: true,
       is_active: true,
+      tags: [],
     });
     setImageUrls([]);
     setNewImageUrl("");
@@ -425,6 +511,10 @@ const AdminProducts = () => {
     setNewCategoryVariantName("");
     setNewCategoryVariantHex("#000000");
     setNewCategoryVariantPrice("");
+    // Reset design editor state
+    setDesignLayers([]);
+    setDesignTemplateUrl(null);
+    setDesignPhotoSlots([]);
   };
 
   // Category-specific handlers
@@ -515,7 +605,12 @@ const AdminProducts = () => {
       frames: variantsToSave,
       is_customizable: formData.is_customizable,
       is_active: formData.is_active,
-    });
+      tags: formData.tags,
+      design_template_url: designTemplateUrl,
+      photo_slots: designPhotoSlots.length > 0 ? designPhotoSlots : [],
+      design_layers: designLayers.length > 0 ? designLayers : [],
+      photo_count: Math.max(1, designPhotoSlots.length || 1),
+    } as any);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -536,8 +631,16 @@ const AdminProducts = () => {
       base_price: product.base_price.toString(),
       is_customizable: product.is_customizable ?? true,
       is_active: product.is_active ?? true,
+      tags: Array.isArray((product as any).tags) ? (product as any).tags : [],
     });
     setImageUrls(product.images || []);
+
+    // Load existing customizable design state
+    const existingLayers = (product as any).design_layers;
+    setDesignLayers(Array.isArray(existingLayers) ? existingLayers : []);
+    setDesignTemplateUrl((product as any).design_template_url ?? null);
+    const existingSlots = (product as any).photo_slots;
+    setDesignPhotoSlots(Array.isArray(existingSlots) ? existingSlots : []);
     
     // Load category-specific sizes and variants
     const defaults = getCategoryDefaults(product.category);
@@ -576,7 +679,12 @@ const AdminProducts = () => {
         frames: variantsToSave,
         is_customizable: formData.is_customizable,
         is_active: formData.is_active,
-      })
+        tags: formData.tags,
+        design_template_url: designTemplateUrl,
+        photo_slots: designPhotoSlots,
+        design_layers: designLayers,
+        photo_count: Math.max(1, designPhotoSlots.length || 1),
+      } as any)
       .eq('id', editingProduct.id);
 
     if (error) {
@@ -743,6 +851,45 @@ const AdminProducts = () => {
         />
       </div>
 
+      {/* Customizable Design Editor — only for Acrylic Wall Photo when customizable */}
+      {formData.category === "Acrylic Wall Photo" && formData.is_customizable && (
+        <div className="space-y-2 border border-coral/30 bg-coral/5 rounded-lg p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <Label className="text-sm font-semibold flex items-center gap-1.5">
+                <Wand className="h-4 w-4 text-coral" />
+                Customizable Design
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Upload PNG layers, add text, and place photo slots where customers will upload their photo.
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setDesignEditorOpen(true)}
+              className="bg-coral hover:bg-coral-dark text-white shrink-0"
+            >
+              {designTemplateUrl ? (<><Edit className="h-4 w-4 mr-1" /> Edit Design</>) : (<><Plus className="h-4 w-4 mr-1" /> Create Design</>)}
+            </Button>
+          </div>
+          {designTemplateUrl && (
+            <div className="flex items-center gap-3 pt-2">
+              <img
+                src={designTemplateUrl}
+                alt="Design preview"
+                className="w-20 h-20 object-contain border border-border rounded bg-white"
+              />
+              <div className="text-xs text-muted-foreground">
+                <div>✓ Template saved</div>
+                <div>{designPhotoSlots.length} photo slot{designPhotoSlots.length !== 1 ? "s" : ""}</div>
+                <div>{designLayers.length} layer{designLayers.length !== 1 ? "s" : ""} total</div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex items-center justify-between py-2">
         <div className="space-y-0.5">
           <Label>Active</Label>
@@ -753,6 +900,49 @@ const AdminProducts = () => {
           onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
         />
       </div>
+
+      {/* Acrylic Wall Photo: Filter Tags (OMGS-style) */}
+      {formData.category === "Acrylic Wall Photo" && (
+        <div className="space-y-2 border-t border-border pt-4">
+          <Label>Filter Tags</Label>
+          <p className="text-xs text-muted-foreground">
+            Select which filters this product should appear under on the storefront
+          </p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {[
+              { id: "portrait", label: "Portrait" },
+              { id: "landscape", label: "Landscape" },
+              { id: "square", label: "Square" },
+              { id: "collage", label: "Collage" },
+              { id: "couple", label: "Couple" },
+              { id: "baby-birth", label: "Baby Birth" },
+              { id: "dual-border", label: "Dual Border" },
+              { id: "creative-wall", label: "Creative Wall" },
+            ].map((tag) => {
+              const checked = formData.tags.includes(tag.id);
+              return (
+                <button
+                  key={tag.id}
+                  type="button"
+                  onClick={() => {
+                    const next = checked
+                      ? formData.tags.filter((t) => t !== tag.id)
+                      : [...formData.tags, tag.id];
+                    setFormData({ ...formData, tags: next });
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                    checked
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background text-foreground border-border hover:border-primary"
+                  }`}
+                >
+                  {tag.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Dynamic Category-Specific Options */}
       {formData.category && (
@@ -897,27 +1087,48 @@ const AdminProducts = () => {
           </h1>
           <p className="text-muted-foreground">Manage your product catalog like OMGS®</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Product
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Add New Product</DialogTitle>
-            </DialogHeader>
-            {productFormFieldsJSX}
-            <div className="flex gap-2">
-              <Button variant="outline" className="flex-1 gap-2" onClick={() => setIsPreviewDialogOpen(true)}>
-                <Eye className="h-4 w-4" />
-                Preview
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={handleBulkDetectSlots}
+            disabled={bulkDetecting}
+            title="Run AI slot detection on all acrylic products without slots"
+          >
+            {bulkDetecting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {bulkProgress ? `Detecting ${bulkProgress.done}/${bulkProgress.total}...` : "Detecting..."}
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 text-coral" />
+                Bulk Detect Slots
+              </>
+            )}
+          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Product
               </Button>
-              <Button onClick={handleAddProduct} className="flex-1">Add Product</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Add New Product</DialogTitle>
+              </DialogHeader>
+              {productFormFieldsJSX}
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 gap-2" onClick={() => setIsPreviewDialogOpen(true)}>
+                  <Eye className="h-4 w-4" />
+                  Preview
+                </Button>
+                <Button onClick={handleAddProduct} className="flex-1">Add Product</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Preview Dialog */}
@@ -1097,6 +1308,34 @@ const AdminProducts = () => {
                             >
                               <Images className="h-4 w-4 text-purple-500" />
                             </Button>
+                          )}
+                          {product.category?.toLowerCase().includes("acrylic") && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleDetectSlots(product)}
+                                disabled={detectingSlotsId === product.id}
+                                title="Auto-detect Photo Slots (AI)"
+                              >
+                                {detectingSlotsId === product.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin text-coral" />
+                                ) : (
+                                  <Wand2 className="h-4 w-4 text-coral" />
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => setSlotEditorProduct(product)}
+                                disabled={!product.images?.[0]}
+                                title="Edit photo slots manually"
+                              >
+                                <Move className="h-4 w-4 text-purple-500" />
+                              </Button>
+                            </>
                           )}
                           <Button 
                             variant="ghost" 
@@ -1297,6 +1536,33 @@ const AdminProducts = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {slotEditorProduct && slotEditorProduct.images?.[0] && (
+        <SlotEditor
+          open={!!slotEditorProduct}
+          onOpenChange={(o) => !o && setSlotEditorProduct(null)}
+          productId={slotEditorProduct.id}
+          productName={slotEditorProduct.name}
+          imageUrl={slotEditorProduct.images[0]}
+          initialSlots={(((slotEditorProduct as any).photo_slots ?? []) as PhotoSlot[])}
+          onSaved={() => {
+            setSlotEditorProduct(null);
+            fetchProducts();
+          }}
+        />
+      )}
+      {/* Customizable Design Editor */}
+      <CustomizableDesignEditor
+        open={designEditorOpen}
+        onOpenChange={setDesignEditorOpen}
+        productName={formData.name || "New Product"}
+        initialLayers={designLayers}
+        onSave={async (layers, templateUrl, slots) => {
+          setDesignLayers(layers);
+          setDesignTemplateUrl(templateUrl);
+          setDesignPhotoSlots(slots);
+        }}
+      />
     </div>
   );
 };

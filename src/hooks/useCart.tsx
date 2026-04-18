@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { requiresCustomization, getCustomizeUrl } from "@/lib/customizableProducts";
 
 interface CartItem {
   id: string;
@@ -48,6 +50,7 @@ export const useCart = () => {
   const [loading, setLoading] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const items = getCartFromStorage();
@@ -73,6 +76,17 @@ export const useCart = () => {
     category,
     unitPrice
   }: AddToCartParams): Promise<boolean> => {
+    // Guard: customizable products MUST be customized first.
+    if (requiresCustomization({ category, customImageUrl, customText })) {
+      toast({
+        title: "Customize first",
+        description: `Please personalize this ${category || "product"} before adding to cart.`,
+        variant: "destructive",
+      });
+      if (productId) navigate(getCustomizeUrl(category, productId, productName));
+      return false;
+    }
+
     setLoading(true);
 
     try {

@@ -11,7 +11,7 @@ import { useBuyNow } from "@/hooks/useBuyNow";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { ReviewsAndSuggestions } from "@/components/product/ReviewsAndSuggestions";
+import { ProductDetailsBlock } from "@/components/product/ProductDetailsBlock";
 import { ProductDetailSkeleton } from "@/components/skeletons";
 import {
   ChevronRight,
@@ -485,10 +485,10 @@ export default function NamePlateCustomize() {
           </div>
         </div>
 
-        {/* Reviews and Related Products */}
-        <ReviewsAndSuggestions 
-          productId={id || "default-name-plate"} 
-          category="Name Plates" 
+        <ProductDetailsBlock
+          productId={id || "default-name-plate"}
+          category="Name Plates"
+          description={product?.description}
         />
       </main>
 

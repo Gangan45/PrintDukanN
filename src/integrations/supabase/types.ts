@@ -307,6 +307,7 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string
+          custom_image_deleted_at: string | null
           custom_image_url: string | null
           custom_text: string | null
           id: string
@@ -322,6 +323,7 @@ export type Database = {
         Insert: {
           category?: string | null
           created_at?: string
+          custom_image_deleted_at?: string | null
           custom_image_url?: string | null
           custom_text?: string | null
           id?: string
@@ -337,6 +339,7 @@ export type Database = {
         Update: {
           category?: string | null
           created_at?: string
+          custom_image_deleted_at?: string | null
           custom_image_url?: string | null
           custom_text?: string | null
           id?: string
@@ -421,10 +424,16 @@ export type Database = {
       }
       products: {
         Row: {
+          allow_custom_text: boolean
+          allowed_fonts: Json
           base_price: number
+          border_styles: Json
           category: string
           created_at: string
           description: string | null
+          design_layers: Json
+          design_template_url: string | null
+          frame_color_options: Json
           frames: Json | null
           id: string
           images: string[] | null
@@ -432,16 +441,27 @@ export type Database = {
           is_customizable: boolean | null
           is_featured: boolean | null
           name: string
+          photo_count: number
+          photo_slots: Json
           quantity: number | null
+          shape: string | null
           sizes: Json | null
+          tags: string[]
+          thickness_options: Json | null
           updated_at: string
           variant_images: Json | null
         }
         Insert: {
+          allow_custom_text?: boolean
+          allowed_fonts?: Json
           base_price?: number
+          border_styles?: Json
           category: string
           created_at?: string
           description?: string | null
+          design_layers?: Json
+          design_template_url?: string | null
+          frame_color_options?: Json
           frames?: Json | null
           id?: string
           images?: string[] | null
@@ -449,16 +469,27 @@ export type Database = {
           is_customizable?: boolean | null
           is_featured?: boolean | null
           name: string
+          photo_count?: number
+          photo_slots?: Json
           quantity?: number | null
+          shape?: string | null
           sizes?: Json | null
+          tags?: string[]
+          thickness_options?: Json | null
           updated_at?: string
           variant_images?: Json | null
         }
         Update: {
+          allow_custom_text?: boolean
+          allowed_fonts?: Json
           base_price?: number
+          border_styles?: Json
           category?: string
           created_at?: string
           description?: string | null
+          design_layers?: Json
+          design_template_url?: string | null
+          frame_color_options?: Json
           frames?: Json | null
           id?: string
           images?: string[] | null
@@ -466,8 +497,13 @@ export type Database = {
           is_customizable?: boolean | null
           is_featured?: boolean | null
           name?: string
+          photo_count?: number
+          photo_slots?: Json
           quantity?: number | null
+          shape?: string | null
           sizes?: Json | null
+          tags?: string[]
+          thickness_options?: Json | null
           updated_at?: string
           variant_images?: Json | null
         }
@@ -568,6 +604,7 @@ export type Database = {
           photos: string[] | null
           product_id: string
           rating: number
+          status: string
           title: string | null
           updated_at: string | null
           user_id: string | null
@@ -582,6 +619,7 @@ export type Database = {
           photos?: string[] | null
           product_id: string
           rating: number
+          status?: string
           title?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -596,6 +634,7 @@ export type Database = {
           photos?: string[] | null
           product_id?: string
           rating?: number
+          status?: string
           title?: string | null
           updated_at?: string | null
           user_id?: string | null

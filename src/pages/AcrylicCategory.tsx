@@ -13,6 +13,8 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import acrylicWall from "@/assets/1-Landscape-Acrylic-Wall-Photo-1.webp";
 import acrylicCollege from "@/assets/collage-1-min-1.webp";
+import { AcrylicFilterBar } from "@/components/acrylic/AcrylicFilterBar";
+import { AcrylicProductGrid } from "@/components/acrylic/AcrylicProductGrid";
 
 
 interface Product {
@@ -22,6 +24,7 @@ interface Product {
   images: string[] | null;
   category: string;
   is_customizable: boolean | null;
+  tags: string[] | null;
 }
 interface Reel {
   id: string;
@@ -131,7 +134,7 @@ const acrylicReels = [
 
 const AcrylicCategory = () => {
   const navigate = useNavigate();
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeTag, setActiveTag] = useState("all");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [hoveredReelId, setHoveredReelId] = useState<string | null>(null);
@@ -246,39 +249,49 @@ const AcrylicCategory = () => {
     return count >= 1000 ? `${(count / 1000).toFixed(1)}K` : count.toString();
   };
 
-  // useEffect(() => {
-  //   loadProducts();
-  // }, []);
+  useEffect(() => {
+    loadProducts();
+  }, []);
 
-  // const loadProducts = async () => {
-  //   try {
-  //     const { data, error } = await supabase
-  //       .from('products')
-  //       .select('id, name, base_price, images, category, is_customizable')
-  //       .eq('category', 'xyz')
-  //       .eq('is_active', true);
+  const loadProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, base_price, images, category, is_customizable, tags')
+        .eq('category', 'Acrylic Wall Photo')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
 
-  //     if (error) throw error;
-  //     setProducts(data || []);
-  //   } catch (error) {
-  //     console.error('Error loading products:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+      if (error) throw error;
+      setProducts((data as Product[]) || []);
+    } catch (error) {
+      console.error('Error loading products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredProducts = activeTag === "all"
+    ? products
+    : products.filter((p) => Array.isArray(p.tags) && p.tags.includes(activeTag));
 
 
   const handleAddToCart = async (product: Product) => {
-    await addToCart({
+    const success = await addToCart({
       productId: product.id,
       productName: product.name,
+      productImage: product.images?.[0] || '',
       unitPrice: product.base_price,
       quantity: 1,
+      category: product.category,
     });
-    toast({
-      title: "Added to Cart",
-      description: `${product.name} has been added to your cart`,
-    });
+
+    if (success) {
+      toast({
+        title: "Added to Cart",
+        description: `${product.name} has been added to your cart`,
+      });
+    }
   };
 
   const handleBuyNow = (product: Product) => {
@@ -287,6 +300,7 @@ const AcrylicCategory = () => {
       productName: product.name,
       productImage: product.images?.[0] || '',
       price: product.base_price,
+      category: product.category,
     });
   };
 
@@ -335,6 +349,14 @@ const AcrylicCategory = () => {
                       loop
                       muted
                       playsInline
+                      onTimeUpdate={(e) => {
+                        const v = e.currentTarget;
+                        // Trim last 2 seconds — loop back early
+                        if (v.duration && v.currentTime >= v.duration - 2) {
+                          v.currentTime = 0;
+                          v.play().catch(() => {});
+                        }
+                      }}
                     />
                   ) : (
                     <img
@@ -371,6 +393,44 @@ const AcrylicCategory = () => {
           </div>
         ))}
       </section>
+
+      {/* OMGS-style: Acrylic Wall Photo with Tag Filters */}
+      <section className="py-12 sm:py-16 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-foreground">
+              Acrylic Wall Photo
+            </h2>
+            <p className="mt-2 text-muted-foreground text-sm sm:text-base">
+              Premium wall décor, made from your photos
+            </p>
+          </div>
+
+          <div className="mb-8">
+            <AcrylicFilterBar
+              activeTag={activeTag}
+              onTagChange={setActiveTag}
+              title="Acrylic Wall Photo Filters:"
+            />
+          </div>
+
+          <AcrylicProductGrid
+            products={filteredProducts}
+            loading={loading}
+            customizeUrlBuilder={(p) => `/customize/${p.id}`}
+            isFavorite={isFavorite}
+            onToggleFavorite={handleToggleFavorite}
+            onAddToCart={handleAddToCart}
+            onBuyNow={handleBuyNow}
+            emptyMessage={
+              activeTag === "all"
+                ? "No acrylic wall photos yet — add some from admin"
+                : `No products tagged "${activeTag}" yet`
+            }
+          />
+        </div>
+      </section>
+
       {/* Acrylic Reels Section */}
       <section className="py-12 sm:py-16 bg-muted/30 overflow-hidden">
         <div className="container mx-auto px-4">

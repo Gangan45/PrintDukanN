@@ -8,7 +8,7 @@ import { useCart } from "@/hooks/useCart";
 import { useBuyNow } from "@/hooks/useBuyNow";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ReviewsAndSuggestions } from "@/components/product/ReviewsAndSuggestions";
+import { ProductDetailsBlock } from "@/components/product/ProductDetailsBlock";
 import { ProductDetailSkeleton } from "@/components/skeletons";
 import {
   Star,
@@ -266,7 +266,11 @@ export default function TShirtCustomize() {
             </div>
           </div>
         </div>
-        <ReviewsAndSuggestions productId={id || "default-tshirt"} category="T-Shirts" />
+        <ProductDetailsBlock
+          productId={id || "default-tshirt"}
+          category="T-Shirts"
+          description={product?.description}
+        />
       </main>
       <Footer />
     </div>

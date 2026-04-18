@@ -13,6 +13,7 @@ import { useBuyNow } from "@/hooks/useBuyNow";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ProductReviewsSection } from "@/components/product/ProductReviewsSection";
+import { WhyPrintdukan } from "@/components/product/WhyPrintdukan";
 
 interface Product {
   id: string;
@@ -327,6 +328,9 @@ const ProductDetail = () => {
             <ProductReviewsSection productId={product.id} />
           </TabsContent>
         </Tabs>
+
+        {/* Why Printdukan Trust Section */}
+        <WhyPrintdukan />
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (

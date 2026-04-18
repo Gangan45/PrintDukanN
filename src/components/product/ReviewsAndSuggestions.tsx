@@ -246,8 +246,8 @@ const WriteReviewForm = ({
         uploadedPhotoUrls.push(publicUrl.publicUrl);
       }
 
-      // Insert review into database
-      const { data: insertedReview, error: insertError } = await supabase
+      // Insert review into database (status = pending; admin approval required)
+      const { error: insertError } = await supabase
         .from('reviews')
         .insert({
           product_id: productId,
@@ -257,33 +257,15 @@ const WriteReviewForm = ({
           title: title.trim() || null,
           content: content.trim(),
           photos: uploadedPhotoUrls,
-          is_verified_purchase: false
-        })
-        .select()
-        .single();
+          is_verified_purchase: false,
+          status: 'pending',
+        } as any);
 
       if (insertError) {
         throw insertError;
       }
 
-      const reviewData = insertedReview as any;
-      const newReview: Review = {
-        id: reviewData.id,
-        product_id: reviewData.product_id,
-        user_id: reviewData.user_id || 'guest',
-        rating: reviewData.rating,
-        title: reviewData.title,
-        content: reviewData.content,
-        photos: reviewData.photos || [],
-        helpful_count: reviewData.helpful_count || 0,
-        is_verified_purchase: reviewData.is_verified_purchase || false,
-        created_at: reviewData.created_at,
-        user_name: reviewData.guest_name || name.trim(),
-        user_avatar: undefined
-      };
-      
-      onSubmit(newReview);
-      toast.success("Review submitted successfully!");
+      toast.success("Review submitted! It will appear after admin approval.");
       
       setRating(0);
       setName("");
@@ -433,27 +415,42 @@ const RelatedProducts = ({ category, currentProductId }: { category: string; cur
   };
 
   const getProductLink = (product: Product) => {
+    const cat = (product.category || '').toLowerCase();
+    const name = (product.name || '').toLowerCase();
+
     // Non-customizable products go to detail pages
     if (product.is_customizable === false) {
-      const cat = product.category.toLowerCase();
-      if (cat.includes('trophy') || cat.includes('trophies')) return `/product/${product.id}`;
-      if (cat.includes('corporate')) return `/corporate-gift/${product.id}`;
+      if (cat.includes('corporate')) return `/corporate-gift/customize/${product.id}`;
       return `/product/${product.id}`;
     }
-    
-    // Customizable products go to customization pages
-    const cat = product.category.toLowerCase();
+
+    // Customizable products — order matters (most specific first)
+    if (cat.includes('name pencil') || name.includes('pencil')) return `/name-pencil/${product.id}`;
+    if (cat.includes('name plate') || cat.includes('nameplate')) return `/nameplate/${product.id}`;
     if (cat.includes('baby')) return `/baby-frame/${product.id}`;
-    if (cat.includes('name') || cat.includes('plate')) return `/nameplate/${product.id}`;
     if (cat.includes('qr')) return `/qr-standee/${product.id}`;
-    if (cat.includes('tshirt')) return `/tshirt/${product.id}`;
-    if (cat.includes('clock')) return `/wall-clock/${product.id}`;
-    if (cat.includes('badge') || cat.includes('wedding')) return `/wedding-card/${product.id}`;
-    if (cat.includes('pencil')) return `/name-pencil/${product.id}`;
-    if (cat.includes('framed') || cat.includes('clear')) return `/framed-acrylic/${product.id}`;
-    if (cat.includes('acrylic')) return `/customize/${product.id}`;
-    if(cat.includes('corporate')) return `/corporate-gift/customize/${product.id}`;
+    if (cat.includes('t-shirt') || cat.includes('tshirt')) return `/tshirt/${product.id}`;
+    if (cat.includes('wall clock') || cat.includes('clock')) return `/wall-clock/${product.id}`;
+    if (cat.includes('wedding') || cat.includes('magnetic') || cat.includes('badge')) return `/wedding-card/${product.id}`;
+    if (cat.includes('framed acrylic')) return `/framed-acrylic/${product.id}`;
+    if (cat.includes('corporate')) return `/corporate-gift/customize/${product.id}`;
+    if (cat.includes('acrylic') || cat.includes('wall photo')) return `/customize/${product.id}`;
     return `/product/${product.id}`;
+  };
+
+  const getCategoryLink = (cat: string) => {
+    const c = (cat || '').toLowerCase();
+    if (c.includes('name pencil')) return '/category/name-pencils';
+    if (c.includes('name plate')) return '/category/name-plates';
+    if (c.includes('baby')) return '/category/baby-frames';
+    if (c.includes('qr')) return '/category/qr-standee';
+    if (c.includes('t-shirt') || c.includes('tshirt')) return '/category/t-shirts';
+    if (c.includes('clock')) return '/category/wall-clocks';
+    if (c.includes('wedding') || c.includes('magnetic') || c.includes('badge')) return '/category/wedding-card';
+    if (c.includes('corporate')) return '/category/corporate-gifts';
+    if (c.includes('trophy') || c.includes('trophies')) return '/category/trophies';
+    if (c.includes('acrylic')) return '/category/acrylic';
+    return '/';
   };
 
   if (loading) {
@@ -471,7 +468,7 @@ const RelatedProducts = ({ category, currentProductId }: { category: string; cur
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-bold">You May Also Like</h3>
         <Link 
-          to={`/category/${category.toLowerCase().replace(' ', '-')}`}
+          to={getCategoryLink(category)}
           className="text-primary text-sm flex items-center hover:underline"
         >
           View All <ChevronRight className="w-4 h-4" />
@@ -543,6 +540,7 @@ export const ReviewsAndSuggestions = ({ productId, category }: ReviewsAndSuggest
         .from('reviews')
         .select('*')
         .eq('product_id', productId)
+        .eq('status', 'approved')
         .order('created_at', { ascending: false });
 
       if (error) {

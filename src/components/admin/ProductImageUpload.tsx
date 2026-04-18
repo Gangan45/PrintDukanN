@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
-import { Upload, X, Loader2, Image as ImageIcon } from "lucide-react";
+import { Upload, X, Loader2, Image as ImageIcon, Crop as CropIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import ImageEditTools from "./editor/ImageEditTools";
 
 interface ProductImageUploadProps {
   images: string[];
@@ -30,6 +31,41 @@ const getCategoryFolder = (category: string): string => {
 const ProductImageUpload = ({ images, onImagesChange, category }: ProductImageUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+  const dataUrlToBlob = (dataUrl: string): Blob => {
+    const [meta, b64] = dataUrl.split(",");
+    const mime = meta.match(/data:(.*?);base64/)?.[1] ?? "image/png";
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  };
+
+  const handleEditedImage = async (newSrc: string) => {
+    if (editingIndex === null) return;
+    try {
+      setUploading(true);
+      const blob = dataUrlToBlob(newSrc);
+      const fileName = `${Date.now()}-edited-${Math.random().toString(36).substring(7)}.png`;
+      const folder = getCategoryFolder(category);
+      const filePath = `${folder}/${fileName}`;
+      const { data, error } = await supabase.storage
+        .from("product-images")
+        .upload(filePath, blob, { cacheControl: "31536000", upsert: false, contentType: "image/png" });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(data.path);
+      const next = [...images];
+      next[editingIndex] = urlData.publicUrl;
+      onImagesChange(next);
+      toast({ title: "Image updated", description: "Cropped/edited image saved." });
+    } catch (err: any) {
+      toast({ title: "Save failed", description: err.message ?? String(err), variant: "destructive" });
+    } finally {
+      setUploading(false);
+      setEditingIndex(null);
+    }
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -174,8 +210,17 @@ const ProductImageUpload = ({ images, onImagesChange, category }: ProductImageUp
                 type="button"
                 onClick={() => handleRemoveImage(index)}
                 className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                title="Remove"
               >
                 <X className="h-3 w-3" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingIndex(index)}
+                className="absolute top-1 left-1 bg-coral text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-coral-dark"
+                title="Crop / Edit"
+              >
+                <CropIcon className="h-3 w-3" />
               </button>
               {index === 0 && (
                 <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">
@@ -185,6 +230,16 @@ const ProductImageUpload = ({ images, onImagesChange, category }: ProductImageUp
             </div>
           ))}
         </div>
+      )}
+
+      {/* Crop / Edit dialog */}
+      {editingIndex !== null && (
+        <ImageEditTools
+          open={editingIndex !== null}
+          onOpenChange={(o) => !o && setEditingIndex(null)}
+          src={images[editingIndex]}
+          onApply={handleEditedImage}
+        />
       )}
 
       {images.length === 0 && (

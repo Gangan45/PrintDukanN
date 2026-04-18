@@ -324,3 +324,29 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+/* When TemplateCustomizer captures the design, hide editor-only chrome */
+.capturing [data-editor-chrome="true"] {
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+}
+.capturing [data-editor-chrome="true"] > .editor-only {
+  display: none !important;
+}
+
+/* When CustomizableDesignEditor exports the template PNG:
+   hide photo-slot layers (customers fill these) + all editor chrome + checker background */
+.capturing-template [data-layer-type="photo-slot"] {
+  display: none !important;
+}
+.capturing-template .editor-chrome {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.capturing-template .editor-only {
+  display: none !important;
+}
+.design-canvas.capturing-template {
+  background: transparent !important;
+  border-color: transparent !important;
+}

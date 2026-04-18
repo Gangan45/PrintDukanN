@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { requiresCustomization, getCustomizeUrl } from "@/lib/customizableProducts";
 
 interface BuyNowParams {
   productId: string;
@@ -18,9 +20,27 @@ const BUY_NOW_STORAGE_KEY = "printdukan_buynow";
 
 export const useBuyNow = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   const buyNow = async (params: BuyNowParams): Promise<boolean> => {
+    // Guard: customizable products MUST be customized first.
+    if (requiresCustomization({
+      category: params.category,
+      customImageUrl: params.customImageUrl,
+      customText: params.customText,
+    })) {
+      toast({
+        title: "Customize first",
+        description: `Please personalize this ${params.category || "product"} before buying.`,
+        variant: "destructive",
+      });
+      if (params.productId) {
+        navigate(getCustomizeUrl(params.category, params.productId, params.productName));
+      }
+      return false;
+    }
+
     setLoading(true);
     try {
       // Handle custom image - convert File to base64 for localStorage

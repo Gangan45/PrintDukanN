@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { FloatingWhatsApp } from "@/components/layout/FloatingWhatsApp";
 import { AuthModalProvider } from "@/contexts/AuthModalContext";
+import ScrollToTop from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -20,6 +21,7 @@ import TrophiesCategory from "./pages/TrophiesCategory";
 import CorporateGiftsCategory from "./pages/CorporateGiftsCategory";
 import CorporateGiftDetail from "./pages/CorporateGiftDetail";
 import ProductCustomize from "./pages/ProductCustomize";
+import OmgsAcrylicCustomize from "./pages/OmgsAcrylicCustomize";
 import TShirtCustomize from "./pages/TShirtCustomize";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -33,6 +35,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminInventory from "./pages/admin/AdminInventory";
 import AdminCoupons from "./pages/admin/AdminCoupons";
 import AdminReviews from "./pages/admin/AdminReviews";
+import AdminAcrylicShapes from "./pages/admin/AdminAcrylicShapes";
 import AdminBulkOrders from "./pages/admin/AdminBulkOrders";
 import AdminReels from "./pages/admin/AdminReels";
 import AdminHeroBanners from "./pages/admin/AdminHeroBanners";
@@ -73,13 +76,15 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <AuthModalProvider>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/orders" element={<Orders />} />
-              <Route path="/customize/:id" element={<ProductCustomize />} />
+              <Route path="/customize/:id" element={<OmgsAcrylicCustomize />} />
+              <Route path="/customize-legacy/:id" element={<ProductCustomize />} />
               <Route path="/tshirt/:id" element={<TShirtCustomize />} />
               <Route path="/category/acrylic" element={<AcrylicCategory />} />
               <Route path="/category/acrylic/baby-frames" element={<BabyFrameCategory />} />
@@ -134,6 +139,7 @@ const App = () => (
                 <Route path="inventory" element={<AdminInventory />} />
                 <Route path="coupons" element={<AdminCoupons />} />
                 <Route path="reviews" element={<AdminReviews />} />
+                <Route path="acrylic-shapes" element={<AdminAcrylicShapes />} />
                 <Route path="reels" element={<AdminReels />} />
                 <Route path="hero-banners" element={<AdminHeroBanners />} />
                 <Route path="videos" element={<AdminVideos />} />

@@ -232,8 +232,8 @@ const WriteReviewForm = ({
         uploadedPhotoUrls.push(publicUrl.publicUrl);
       }
 
-      // Insert review into database
-      const { data: insertedReview, error: insertError } = await supabase
+      // Insert review into database (status pending — admin must approve)
+      const { error: insertError } = await supabase
         .from('reviews')
         .insert({
           product_id: productId,
@@ -243,33 +243,15 @@ const WriteReviewForm = ({
           title: title.trim() || null,
           content: content.trim(),
           photos: uploadedPhotoUrls,
-          is_verified_purchase: false
-        })
-        .select()
-        .single();
+          is_verified_purchase: false,
+          status: 'pending',
+        } as any);
 
       if (insertError) {
         throw insertError;
       }
 
-      const reviewData = insertedReview as any;
-      const newReview: Review = {
-        id: reviewData.id,
-        product_id: reviewData.product_id,
-        user_id: reviewData.user_id || 'guest',
-        rating: reviewData.rating,
-        title: reviewData.title,
-        content: reviewData.content,
-        photos: reviewData.photos || [],
-        helpful_count: reviewData.helpful_count || 0,
-        is_verified_purchase: reviewData.is_verified_purchase || false,
-        created_at: reviewData.created_at,
-        user_name: reviewData.guest_name || name.trim(),
-        user_avatar: undefined
-      };
-      
-      onSubmit(newReview);
-      toast.success("Review submitted successfully!");
+      toast.success("Review submitted! It will appear after admin approval.");
       
       setRating(0);
       setName("");
@@ -405,6 +387,7 @@ export const ProductReviewsSection = ({ productId }: ProductReviewsSectionProps)
         .from('reviews')
         .select('*')
         .eq('product_id', productId)
+        .eq('status', 'approved')
         .order('created_at', { ascending: false });
 
       if (error) throw error;

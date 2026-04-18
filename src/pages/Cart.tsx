@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useCart } from "@/hooks/useCart";
 import { useCoupon } from "@/hooks/useCoupon";
 import { AvailableCoupons } from "@/components/cart/AvailableCoupons";
+import { CustomDesignPreview } from "@/components/cart/CustomDesignPreview";
 import { ShoppingCart, Minus, Plus, Trash2, ArrowRight, ShoppingBag, Tag, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -81,14 +82,13 @@ const Cart = () => {
             {cartItems.map((item) => (
               <Card key={item.id} className="p-3 sm:p-4">
                 <div className="flex gap-3 sm:gap-4">
-                  {/* Product Image - Always show default product image */}
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg bg-muted overflow-hidden flex-shrink-0">
-                    <img
-                      src={getDisplayImage(item)}
-                      alt={item.product_name || "Product"}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  {/* Product Image - click to preview custom design */}
+                  <CustomDesignPreview
+                    productImage={getDisplayImage(item)}
+                    customImageUrl={item.custom_image_url}
+                    alt={item.product_name || "Product"}
+                    className="w-20 h-20 sm:w-24 sm:h-24"
+                  />
 
                   {/* Product Details */}
                   <div className="flex-1 min-w-0">
@@ -103,7 +103,9 @@ const Cart = () => {
                         <p className="truncate">Variant: {item.selected_frame}</p>
                       )}
                       {item.custom_image_url && (
-                        <p className="text-xs text-primary">• Custom design</p>
+                        <p className="text-xs text-primary font-medium">
+                          • Tap photo to preview your design
+                        </p>
                       )}
                     </div>
                     <p className="font-bold text-primary mt-1.5 sm:mt-2 text-sm sm:text-base">

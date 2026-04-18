@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, ShoppingCart, FolderTree, Settings, ArrowLeft, Users, Warehouse, Ticket, Star, FileStack, Film, ImageIcon, Youtube, Sparkles, Pencil, BadgePercent, BarChart3, LogOut } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FolderTree, Settings, ArrowLeft, Users, Warehouse, Ticket, Star, FileStack, Film, ImageIcon, Youtube, Sparkles, Pencil, BadgePercent, BarChart3, LogOut, Shapes } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -21,6 +21,7 @@ const menuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Hero Banners", url: "/admin/hero-banners", icon: ImageIcon },
   { title: "Products", url: "/admin/products", icon: Package },
+  { title: "Acrylic Shapes", url: "/admin/acrylic-shapes", icon: Shapes },
   { title: "Featured", url: "/admin/featured", icon: Sparkles },
   { title: "Orders", url: "/admin/orders", icon: ShoppingCart },
   { title: "Inventory", url: "/admin/inventory", icon: Warehouse },
