@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { FloatingWhatsApp } from "@/components/layout/FloatingWhatsApp";
+import { CartOffersPopup } from "@/components/cart/CartOffersPopup";
 import { AuthModalProvider } from "@/contexts/AuthModalContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import Index from "./pages/Index";
@@ -45,6 +46,7 @@ import AdminNamePencils from "./pages/admin/AdminNamePencils";
 import AdminSpecialOffers from "./pages/admin/AdminSpecialOffers";
 import AdminStats from "./pages/admin/AdminStats";
 import AdminAbandonedCheckouts from "./pages/admin/AdminAbandonedCheckouts";
+import AdminCartOffers from "./pages/admin/AdminCartOffers";
 import MagneticBadgeCategory from "./pages/MagneticBadgeCategory";
 import MagneticBadgeCustomize from "./pages/MagneticBadgeCustomize";
 import QRStandyCategory from "./pages/QRStandyCategory";
@@ -69,6 +71,7 @@ import NamePencilCustomize from "./pages/NamePencilCustomize";
 import AdminResetPassword from "./pages/AdminResetPassword";
 import FridgeMagnetCategory from "./pages/FridgeMagnetCategory";
 import FridgeMagnetCustomize from "./pages/FridgeMagnetCustomize";
+import AcrylicMagnetCategory from "./pages/AcrylicMagnetCategory";
 
 const queryClient = new QueryClient();
 
@@ -121,6 +124,8 @@ const App = () => (
               <Route path="/name-pencil/:id" element={<NamePencilCustomize />} />
               <Route path="/name-pencil/customize" element={<NamePencilCustomize />} />
               <Route path="/category/fridge-magnet" element={<FridgeMagnetCategory />} />
+              <Route path="/category/acrylic-magnet" element={<AcrylicMagnetCategory />} />
+              <Route path="/category/acrylic/acrylic-magnet" element={<AcrylicMagnetCategory />} />
               <Route path="/fridge-magnet/:id" element={<FridgeMagnetCustomize />} />
               <Route path="/fridge-magnet/customize" element={<FridgeMagnetCustomize />} />
               <Route path="/cart" element={<Cart />} />
@@ -159,6 +164,7 @@ const App = () => (
                 <Route path="stats" element={<AdminStats />} />
                 <Route path="customers" element={<AdminCustomers />} />
                 <Route path="settings" element={<AdminSettings />} />
+                <Route path="cart-offers" element={<AdminCartOffers />} />
                 
               </Route>
 
@@ -166,6 +172,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
             <FloatingWhatsApp />
+            <CartOffersPopup />
           </AuthModalProvider>
         </BrowserRouter>
       </TooltipProvider>

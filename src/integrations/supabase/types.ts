@@ -151,6 +151,96 @@ export type Database = {
           },
         ]
       }
+      cart_offer_items: {
+        Row: {
+          action_type: string
+          badge_color: string
+          badge_text: string | null
+          category_tag: string | null
+          created_at: string
+          cta_text: string
+          display_order: number
+          id: string
+          image_url: string
+          is_active: boolean
+          link: string
+          original_price: number | null
+          price: number
+          product_id: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          action_type?: string
+          badge_color?: string
+          badge_text?: string | null
+          category_tag?: string | null
+          created_at?: string
+          cta_text?: string
+          display_order?: number
+          id?: string
+          image_url: string
+          is_active?: boolean
+          link?: string
+          original_price?: number | null
+          price?: number
+          product_id?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          badge_color?: string
+          badge_text?: string | null
+          category_tag?: string | null
+          created_at?: string
+          cta_text?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          link?: string
+          original_price?: number | null
+          price?: number
+          product_id?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cart_offers: {
+        Row: {
+          created_at: string
+          eligible_categories: Json
+          headline: string
+          id: string
+          is_enabled: boolean
+          subtitle: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          eligible_categories?: Json
+          headline?: string
+          id?: string
+          is_enabled?: boolean
+          subtitle?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          eligible_categories?: Json
+          headline?: string
+          id?: string
+          is_enabled?: boolean
+          subtitle?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string | null

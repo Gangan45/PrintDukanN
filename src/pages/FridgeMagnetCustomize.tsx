@@ -28,6 +28,7 @@ import {
   VariantImages,
 } from "@/lib/variantImages";
 import { ProductDetailsBlock } from "@/components/product/ProductDetailsBlock";
+import { captureDesignFromDOM } from "@/lib/captureDesign";
 
 interface Product {
   id: string;
@@ -38,11 +39,19 @@ interface Product {
   variant_images: VariantImages | null;
 }
 
+// CSS clip-path values for each shape — used for live preview
 const SHAPE_OPTIONS = [
-  { id: "square", label: "Square", emoji: "▢" },
-  { id: "circle", label: "Circle", emoji: "◯" },
-  { id: "heart", label: "Heart", emoji: "♥" },
-  { id: "custom-cutout", label: "Custom Cutout", emoji: "✂" },
+  { id: "square", label: "Square", emoji: "▢", clip: "inset(0 round 8px)" },
+  { id: "circle", label: "Circle", emoji: "◯", clip: "circle(50% at 50% 50%)" },
+  { id: "heart", label: "Heart", emoji: "♥",
+    clip: "path('M50,88 C18,66 4,46 4,28 C4,14 16,4 28,4 C38,4 46,10 50,20 C54,10 62,4 72,4 C84,4 96,14 96,28 C96,46 82,66 50,88 Z')" },
+  { id: "star", label: "Star", emoji: "★",
+    clip: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)" },
+  { id: "hexagon", label: "Hexagon", emoji: "⬡",
+    clip: "polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%)" },
+  { id: "oval", label: "Oval", emoji: "⬭", clip: "ellipse(40% 50% at 50% 50%)" },
+  { id: "rounded", label: "Rounded", emoji: "▢", clip: "inset(0 round 24px)" },
+  { id: "custom-cutout", label: "Custom Cutout", emoji: "✂", clip: "none" },
 ] as const;
 
 type ShapeId = (typeof SHAPE_OPTIONS)[number]["id"];
@@ -104,6 +113,8 @@ const FridgeMagnetCustomize = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [magnets, setMagnets] = useState<MagnetItem[]>([newMagnet()]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Refs to each magnet's live preview node — used to capture the masked design as base64
+  const previewRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const { addToCart } = useCart();
   const { buyNow } = useBuyNow();
@@ -229,6 +240,19 @@ const FridgeMagnetCustomize = () => {
       .join(" | ");
   };
 
+  // Capture the masked live-preview of one magnet to a base64 PNG so the
+  // admin downloads exactly what the customer saw (with shape cutout applied).
+  const captureMagnetPreview = async (mid: string): Promise<string | null> => {
+    const node = previewRefs.current[mid];
+    if (!node) return null;
+    try {
+      return await captureDesignFromDOM(node);
+    } catch (err) {
+      console.error("Preview capture failed:", err);
+      return null;
+    }
+  };
+
   const handleAddToCart = async () => {
     if (!product) return;
     if (!validate()) return;
@@ -237,6 +261,8 @@ const FridgeMagnetCustomize = () => {
       // Add each magnet group as a separate cart line (so each photo upload persists)
       for (let i = 0; i < magnets.length; i++) {
         const m = magnets[i];
+        // Capture the masked preview — falls back to the raw upload if capture fails
+        const designSnapshot = await captureMagnetPreview(m.id);
         await addToCart({
           productId: product.id,
           productName: `${product.name} (${
@@ -246,7 +272,7 @@ const FridgeMagnetCustomize = () => {
           quantity: m.qty,
           unitPrice: perPiece,
           selectedSize: SHAPE_OPTIONS.find((s) => s.id === m.shape)?.label,
-          customImageUrl: m.file || undefined,
+          customImageUrl: designSnapshot || m.file || undefined,
           customText: `Shape: ${
             SHAPE_OPTIONS.find((s) => s.id === m.shape)?.label
           }`,
@@ -275,6 +301,7 @@ const FridgeMagnetCustomize = () => {
     try {
       // Buy-now uses the first magnet as primary line; group totals via custom text
       const first = magnets[0];
+      const designSnapshot = await captureMagnetPreview(first.id);
       await buyNow({
         productId: product.id,
         productName: product.name,
@@ -282,7 +309,7 @@ const FridgeMagnetCustomize = () => {
         price: perPiece,
         quantity: totalQty,
         selectedSize: SHAPE_OPTIONS.find((s) => s.id === first.shape)?.label,
-        customImageUrl: first.file || undefined,
+        customImageUrl: designSnapshot || first.file || undefined,
         customText: buildCustomText(),
         category: "fridge-magnet",
       });
@@ -323,10 +350,17 @@ const FridgeMagnetCustomize = () => {
           </Link>
           <ChevronRight className="w-4 h-4" />
           <Link
-            to="/category/fridge-magnet"
+            to="/category/acrylic"
             className="hover:text-primary transition-colors"
           >
-            Fridge Magnet
+            Acrylic
+          </Link>
+          <ChevronRight className="w-4 h-4" />
+          <Link
+            to="/category/acrylic-magnet"
+            className="hover:text-primary transition-colors"
+          >
+            Acrylic Magnet
           </Link>
           <ChevronRight className="w-4 h-4" />
           <span className="text-foreground font-medium">Customize</span>
@@ -431,10 +465,24 @@ const FridgeMagnetCustomize = () => {
                 {PRICE_TIERS.slice(1).map((tier) => {
                   const active = totalQty >= tier.minQty;
                   return (
-                    <div
+                    <button
                       key={tier.minQty}
+                      type="button"
+                      onClick={() => {
+                        if (magnets.length === 0) return;
+                        // Set the first magnet's qty to this tier so totalQty hits the threshold
+                        const others = magnets
+                          .slice(1)
+                          .reduce((sum, m) => sum + (m.qty || 0), 0);
+                        const newFirstQty = Math.max(1, tier.minQty - others);
+                        updateMagnet(magnets[0].id, { qty: newFirstQty });
+                        toast({
+                          title: `Tier applied: ₹${tier.perPiece}/- each`,
+                          description: `Quantity set to ${tier.minQty} magnets`,
+                        });
+                      }}
                       className={cn(
-                        "rounded-lg border-2 p-3 text-center transition-all",
+                        "rounded-lg border-2 p-3 text-center transition-all cursor-pointer hover:border-primary hover:shadow-md hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary/40",
                         active
                           ? "border-primary bg-primary/10"
                           : "border-border bg-background/60"
@@ -449,7 +497,7 @@ const FridgeMagnetCustomize = () => {
                       <p className="text-sm text-primary font-semibold mt-1">
                         ₹{tier.perPiece}/- Each
                       </p>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -457,7 +505,9 @@ const FridgeMagnetCustomize = () => {
 
             {/* Magnets list */}
             <div className="space-y-4">
-              {magnets.map((m, idx) => (
+              {magnets.map((m, idx) => {
+                const shapeDef = SHAPE_OPTIONS.find((s) => s.id === m.shape);
+                return (
                 <div
                   key={m.id}
                   className="rounded-xl border-2 border-primary/30 p-4 space-y-4 bg-card"
@@ -476,6 +526,48 @@ const FridgeMagnetCustomize = () => {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
+                  </div>
+
+                  {/* LIVE PREVIEW */}
+                  <div className="rounded-lg bg-gradient-to-br from-muted/40 to-muted/10 border border-border p-4 flex flex-col items-center gap-2">
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                      Live Preview
+                    </p>
+                    <div
+                      ref={(el) => (previewRefs.current[m.id] = el)}
+                      className="relative w-40 h-40 flex items-center justify-center"
+                    >
+                      {m.preview ? (
+                        <div
+                          className="w-full h-full bg-white shadow-lg overflow-hidden transition-all duration-300"
+                          style={{
+                            clipPath: shapeDef?.clip,
+                            WebkitClipPath: shapeDef?.clip,
+                          }}
+                        >
+                          <img
+                            src={m.preview}
+                            alt={`Magnet ${idx + 1} preview`}
+                            className="w-full h-full object-cover"
+                            crossOrigin="anonymous"
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed border-border"
+                          style={{
+                            clipPath: shapeDef?.clip,
+                            WebkitClipPath: shapeDef?.clip,
+                          }}
+                        >
+                          <Upload className="h-6 w-6 mb-1" />
+                          <span className="text-[10px]">Upload photo</span>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Shape: <strong className="text-foreground">{shapeDef?.label}</strong> · Qty: <strong className="text-foreground">{m.qty}</strong>
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -530,12 +622,12 @@ const FridgeMagnetCustomize = () => {
                           className={cn(
                             "flex flex-col items-center gap-1 rounded-lg border-2 p-2 transition-all",
                             m.shape === s.id
-                              ? "border-primary bg-primary/10"
+                              ? "border-primary bg-primary/10 shadow-sm"
                               : "border-border hover:border-muted-foreground"
                           )}
                         >
-                          <span className="text-xl">{s.emoji}</span>
-                          <span className="text-[11px] font-medium text-foreground leading-tight text-center">
+                          <span className="text-xl leading-none">{s.emoji}</span>
+                          <span className="text-[10px] font-medium text-foreground leading-tight text-center">
                             {s.label}
                           </span>
                         </button>
@@ -543,7 +635,8 @@ const FridgeMagnetCustomize = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
 
               <Button
                 variant="outline"

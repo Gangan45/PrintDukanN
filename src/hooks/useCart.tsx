@@ -142,6 +142,13 @@ export const useCart = () => {
         title: "Added to Cart",
         description: `${productName} added to your cart`
       });
+
+      // Trigger cart offers popup (async, non-blocking)
+      if (category && category !== "offer-gift") {
+        window.dispatchEvent(
+          new CustomEvent("cart-offer-trigger", { detail: { category, productId } })
+        );
+      }
       return true;
     } catch (error: any) {
       toast({

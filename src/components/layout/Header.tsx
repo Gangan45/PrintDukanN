@@ -22,6 +22,7 @@ const acrylicSubcategories = [
   { name: "Framed Acrylic Photo", href: "/category/acrylic/framed-photo" },
   { name: "Wall Clocks", href: "/category/wall-clocks" },
   { name: "Baby Frames", href: "/category/baby-frames" },
+  { name: "Acrylic Magnet", href: "/category/acrylic-magnet" },
 ];
 
 const navLinks = [

@@ -75,6 +75,19 @@ export const useBuyNow = () => {
 
       localStorage.setItem(BUY_NOW_STORAGE_KEY, JSON.stringify(buyNowItem));
 
+      // Trigger cart offers popup (same as Add to Cart)
+      if (params.category && params.category !== "offer-gift") {
+        window.dispatchEvent(
+          new CustomEvent("cart-offer-trigger", {
+            detail: {
+              category: params.category,
+              productId: params.productId,
+              source: "buynow",
+            },
+          })
+        );
+      }
+
       // Navigate directly to checkout with buy now flag
       navigate("/checkout?buynow=true");
       return true;

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, ShoppingCart, FolderTree, Settings, ArrowLeft, Users, Warehouse, Ticket, Star, FileStack, Film, ImageIcon, Youtube, Sparkles, Pencil, BadgePercent, BarChart3, LogOut, Shapes, PhoneCall } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FolderTree, Settings, ArrowLeft, Users, Warehouse, Ticket, Star, FileStack, Film, ImageIcon, Youtube, Sparkles, Pencil, BadgePercent, BarChart3, LogOut, Shapes, PhoneCall, Gift } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -33,6 +33,7 @@ const menuItems = [
   { title: "Categories", url: "/admin/categories", icon: FolderTree },
   { title: "Name Pencils", url: "/admin/name-pencils", icon: Pencil },
   { title: "Special Offers", url: "/admin/special-offers", icon: BadgePercent },
+  { title: "Cart Offers Popup", url: "/admin/cart-offers", icon: Gift },
   { title: "Homepage Stats", url: "/admin/stats", icon: BarChart3 },
   { title: "Customers", url: "/admin/customers", icon: Users },
   { title: "Settings", url: "/admin/settings", icon: Settings },
