@@ -67,6 +67,8 @@ import ContactUs from "./pages/ContactUs";
 import NamePencilCategory from "./pages/NamePencilCategory";
 import NamePencilCustomize from "./pages/NamePencilCustomize";
 import AdminResetPassword from "./pages/AdminResetPassword";
+import FridgeMagnetCategory from "./pages/FridgeMagnetCategory";
+import FridgeMagnetCustomize from "./pages/FridgeMagnetCustomize";
 
 const queryClient = new QueryClient();
 
@@ -118,6 +120,9 @@ const App = () => (
               <Route path="/category/name-pencils" element={<NamePencilCategory />} />
               <Route path="/name-pencil/:id" element={<NamePencilCustomize />} />
               <Route path="/name-pencil/customize" element={<NamePencilCustomize />} />
+              <Route path="/category/fridge-magnet" element={<FridgeMagnetCategory />} />
+              <Route path="/fridge-magnet/:id" element={<FridgeMagnetCustomize />} />
+              <Route path="/fridge-magnet/customize" element={<FridgeMagnetCustomize />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/reset-password" element={<ResetPassword />} />

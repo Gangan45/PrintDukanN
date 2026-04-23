@@ -20,6 +20,8 @@ const CUSTOMIZABLE_CATEGORY_KEYWORDS = [
   "tshirt",
   "framed acrylic",
   "wall photo",
+  "fridge magnet",
+  "fridge-magnet",
 ];
 
 /** True if a product category is one we expect to be personalized. */
@@ -64,6 +66,7 @@ export function getCustomizeUrl(
   if (c.includes("t-shirt") || c.includes("tshirt"))
     return `/tshirt-customize/${productId}`;
   if (c.includes("framed acrylic")) return `/framed-acrylic-customize/${productId}`;
+  if (c.includes("fridge")) return `/fridge-magnet/${productId}`;
   if (c.includes("omg") || n.includes("omg"))
     return `/omgs-acrylic-customize/${productId}`;
   // Default acrylic / wall photo / generic customizable

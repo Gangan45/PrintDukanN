@@ -67,6 +67,9 @@ const getCustomizeUrl = (category: string, productId: string, productName: strin
   if (lowerCategory === "corporate-gifts" || lowerCategory === "corporate gifts") {
     return `/corporate-gift/customize/${productId}`;
   }
+  if (lowerCategory === "fridge-magnet" || lowerCategory === "fridge magnet" || lowerCategory === "fridge magnets") {
+    return `/fridge-magnet/${productId}`;
+  }
 
   // Default customize route
   return `/customize/${productId}`;
