@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Package, ShoppingCart, Users, TrendingUp, IndianRupee, Eye, Star, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -148,28 +149,32 @@ const AdminDashboard = () => {
       value: `₹${stats.totalRevenue.toLocaleString()}`, 
       change: "+12.5%", 
       icon: IndianRupee, 
-      color: "text-emerald-500" 
+      color: "text-emerald-500",
+      link: "/admin/orders"
     },
     { 
       title: "Total Orders", 
       value: stats.totalOrders.toString(), 
       change: "+8.2%", 
       icon: ShoppingCart, 
-      color: "text-blue-500" 
+      color: "text-blue-500",
+      link: "/admin/orders"
     },
     { 
       title: "Total Products", 
       value: stats.totalProducts.toString(), 
       change: "+3.1%", 
       icon: Package, 
-      color: "text-purple-500" 
+      color: "text-purple-500",
+      link: "/admin/products"
     },
     { 
       title: "Total Customers", 
       value: stats.totalCustomers.toString(), 
       change: "+15.3%", 
       icon: Users, 
-      color: "text-orange-500" 
+      color: "text-orange-500",
+      link: "/admin/customers"
     },
   ];
 
@@ -183,19 +188,21 @@ const AdminDashboard = () => {
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statsData.map((stat) => (
-          <Card key={stat.title} className="border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-              <stat.icon className={`h-5 w-5 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-              <p className="text-xs text-emerald-500 flex items-center gap-1 mt-1">
-                <TrendingUp className="h-3 w-3" />
-                {stat.change} from last month
-              </p>
-            </CardContent>
-          </Card>
+          <Link key={stat.title} to={stat.link} className="block group">
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm transition-all group-hover:shadow-lg group-hover:-translate-y-0.5 group-hover:border-primary/40 cursor-pointer h-full">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
+                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                <p className="text-xs text-emerald-500 flex items-center gap-1 mt-1">
+                  <TrendingUp className="h-3 w-3" />
+                  {stat.change} from last month
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 

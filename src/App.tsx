@@ -44,6 +44,7 @@ import AdminFeaturedProducts from "./pages/admin/AdminFeaturedProducts";
 import AdminNamePencils from "./pages/admin/AdminNamePencils";
 import AdminSpecialOffers from "./pages/admin/AdminSpecialOffers";
 import AdminStats from "./pages/admin/AdminStats";
+import AdminAbandonedCheckouts from "./pages/admin/AdminAbandonedCheckouts";
 import MagneticBadgeCategory from "./pages/MagneticBadgeCategory";
 import MagneticBadgeCustomize from "./pages/MagneticBadgeCustomize";
 import QRStandyCategory from "./pages/QRStandyCategory";
@@ -80,6 +81,7 @@ const App = () => (
           <AuthModalProvider>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/home" element={<Navigate to="/" replace />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/orders" element={<Orders />} />
@@ -136,6 +138,7 @@ const App = () => (
                 <Route index element={<AdminDashboard />} />
                 <Route path="products" element={<AdminProducts />} />
                 <Route path="orders" element={<AdminOrders />} />
+                <Route path="abandoned-checkouts" element={<AdminAbandonedCheckouts />} />
                 <Route path="inventory" element={<AdminInventory />} />
                 <Route path="coupons" element={<AdminCoupons />} />
                 <Route path="reviews" element={<AdminReviews />} />

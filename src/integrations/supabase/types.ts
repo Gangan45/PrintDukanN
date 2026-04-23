@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      abandoned_checkouts: {
+        Row: {
+          address: string
+          admin_notes: string | null
+          cart_items: Json
+          city: string
+          converted_order_id: string | null
+          created_at: string
+          full_name: string
+          id: string
+          landmark: string | null
+          phone: string
+          pincode: string
+          state: string
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address: string
+          admin_notes?: string | null
+          cart_items?: Json
+          city: string
+          converted_order_id?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          landmark?: string | null
+          phone: string
+          pincode: string
+          state: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string
+          admin_notes?: string | null
+          cart_items?: Json
+          city?: string
+          converted_order_id?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          landmark?: string | null
+          phone?: string
+          pincode?: string
+          state?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       admin_settings: {
         Row: {
           created_at: string

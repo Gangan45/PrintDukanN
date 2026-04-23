@@ -15,6 +15,7 @@ import acrylicWall from "@/assets/1-Landscape-Acrylic-Wall-Photo-1.webp";
 import acrylicCollege from "@/assets/collage-1-min-1.webp";
 import { AcrylicFilterBar } from "@/components/acrylic/AcrylicFilterBar";
 import { AcrylicProductGrid } from "@/components/acrylic/AcrylicProductGrid";
+import wallClockShowcase from "@/assets/wall-clock-showcase.mp4.asset.json";
 
 
 interface Product {
@@ -54,7 +55,7 @@ const acrylicShowcases = [
     title: "Acrylic Wall Clock",
     subtitle: "Timeless Elegance",
     description: "Experience timeless elegance with personalized photo wall clocks, where your memories transform a simple timepiece into a captivating decor statement.",
-    image: "https://rqnknqgpqttjqqhaejmt.supabase.co/storage/v1/object/public/reel-videos/categories/category-1770128202669-xtfa337eah.mp4",
+    image: wallClockShowcase.url,
     isVideo: true, // Mark this as video
     bgColor: "from-emerald-900/80 to-teal-900/60",
   },

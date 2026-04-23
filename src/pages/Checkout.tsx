@@ -59,6 +59,7 @@ const Checkout = () => {
   const [couponCode, setCouponCode] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "razorpay">("razorpay");
   const [codAdvanceAmount, setCodAdvanceAmount] = useState(199);
+  const [abandonedId, setAbandonedId] = useState<string | null>(null);
 
   // Payment-based discounts
   const ONLINE_PAYMENT_DISCOUNT_PERCENT = 10;
@@ -201,6 +202,57 @@ const Checkout = () => {
     return true;
   };
 
+  const saveAbandonedCheckout = async () => {
+    try {
+      const cartSnapshot = checkoutItems.map((item) => ({
+        product_id: item.product_id,
+        product_name: item.product_name,
+        product_image: item.product_image,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        selected_size: item.selected_size,
+        selected_frame: item.selected_frame,
+        custom_image_url: item.custom_image_url,
+        custom_text: item.custom_text,
+        category: item.category,
+      }));
+
+      // Generate id client-side so we don't need SELECT permission after insert
+      const newId = abandonedId || (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+
+      const payload = {
+        id: newId,
+        full_name: shippingData.fullName.trim(),
+        phone: shippingData.phone.trim(),
+        address: shippingData.address.trim(),
+        landmark: shippingData.landmark?.trim() || null,
+        city: shippingData.city.trim(),
+        state: shippingData.state.trim(),
+        pincode: shippingData.pincode.trim(),
+        cart_items: cartSnapshot as any,
+        total_amount: finalTotal,
+        status: "new",
+      };
+
+      // Always insert (upsert by id) — guests cannot UPDATE due to RLS, so we insert a fresh record
+      // If user clicks Continue multiple times we'll create multiple records; admin can dedupe by phone.
+      if (!abandonedId) {
+        const { error } = await supabase.from("abandoned_checkouts").insert(payload);
+        if (!error) setAbandonedId(newId);
+        else console.error("Failed to save abandoned checkout:", error);
+      }
+    } catch (err) {
+      // Silent fail — never block checkout flow
+      console.error("Failed to save abandoned checkout:", err);
+    }
+  };
+
+  const handleContinueToPayment = () => {
+    if (!validateShipping()) return;
+    saveAbandonedCheckout();
+    setStep(2);
+  };
+
   const getDisplayImage = (item: CheckoutItem) => {
     if (item.product_image) return item.product_image;
     return "/placeholder.svg";
@@ -249,6 +301,18 @@ const Checkout = () => {
       .insert(orderItemsData as any);
 
     if (itemsError) throw itemsError;
+
+    // Mark abandoned checkout as converted
+    if (abandonedId) {
+      try {
+        await supabase
+          .from("abandoned_checkouts")
+          .update({ status: "converted", converted_order_id: order.id })
+          .eq("id", abandonedId);
+      } catch (e) {
+        console.error("Failed to mark abandoned checkout as converted:", e);
+      }
+    }
 
     // Send admin notification
     try {
@@ -554,9 +618,9 @@ const Checkout = () => {
                   {/* Desktop button */}
                   <Button 
                     className="w-full mt-4 h-12 text-base font-semibold rounded-xl hidden sm:flex" 
-                    onClick={() => validateShipping() && setStep(2)}
+                    onClick={handleContinueToPayment}
                   >
-                    Continue to Payment
+                    Continue
                   </Button>
                 </CardContent>
               </Card>
@@ -778,9 +842,9 @@ const Checkout = () => {
         {step === 1 ? (
           <Button 
             className="w-full h-14 text-base font-semibold rounded-xl shadow-lg shadow-primary/20" 
-            onClick={() => validateShipping() && setStep(2)}
+            onClick={handleContinueToPayment}
           >
-            Continue to Payment
+            Continue
           </Button>
         ) : (
           <div className="flex gap-3">
