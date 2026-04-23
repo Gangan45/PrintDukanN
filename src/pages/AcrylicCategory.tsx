@@ -15,7 +15,8 @@ import acrylicWall from "@/assets/1-Landscape-Acrylic-Wall-Photo-1.webp";
 import acrylicCollege from "@/assets/collage-1-min-1.webp";
 import { AcrylicFilterBar } from "@/components/acrylic/AcrylicFilterBar";
 import { AcrylicProductGrid } from "@/components/acrylic/AcrylicProductGrid";
-import wallClockShowcase from "@/assets/wall-clock-showcase.mp4.asset.json";
+import wallClockShowcase from "@/assets/acrylic-wall-clock-showcase.mp4.asset.json";
+import framedAcrylicShowcase from "@/assets/framed-acrylic-photo-showcase.mp4.asset.json";
 
 
 interface Product {
@@ -64,7 +65,7 @@ const acrylicShowcases = [
     title: "Framed Acrylic Photo",
     subtitle: "Classic Sophistication",
     description: "Personalize your décor with framed acrylic photos, expertly crafted to highlight your favorite memories with elegance and clarity.",
-    image: "https://rqnknqgpqttjqqhaejmt.supabase.co/storage/v1/object/public/reel-videos/categories/WhatsApp%20Video%202026-02-09%20at%2013.59.00.mp4",
+    image: framedAcrylicShowcase.url,
     isVideo: true, // Mark this as video
     bgColor: "from-purple-900/80 to-indigo-900/60",
   },
@@ -154,6 +155,8 @@ const AcrylicCategory = () => {
     const stored = localStorage.getItem('likedReels');
     return stored ? new Set(JSON.parse(stored)) : new Set();
   });
+  const [loadedShowcaseVideos, setLoadedShowcaseVideos] = useState<Set<string>>(new Set());
+  const [failedShowcaseVideos, setFailedShowcaseVideos] = useState<Set<string>>(new Set());
 
   // Handle Like Function
   const handleLike = async (e: React.MouseEvent, reelId: string) => {
@@ -343,22 +346,55 @@ const AcrylicCategory = () => {
                   <div className="absolute -inset-4 bg-white/10 rounded-2xl blur-xl group-hover:bg-white/20 transition-all duration-500" />
 
                   {showcase.isVideo ? (
-                    <video
-                      src={showcase.image}
-                      className="relative w-full max-w-md mx-auto rounded-lg shadow-2xl transform group-hover:scale-[1.02] transition-transform duration-500"
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      onTimeUpdate={(e) => {
-                        const v = e.currentTarget;
-                        // Trim last 2 seconds — loop back early
-                        if (v.duration && v.currentTime >= v.duration - 2) {
-                          v.currentTime = 0;
-                          v.play().catch(() => {});
-                        }
-                      }}
-                    />
+                    <div className="relative w-full max-w-md mx-auto min-h-[240px]">
+                      {failedShowcaseVideos.has(showcase.id) ? (
+                        <img
+                          src={acrylicWall}
+                          alt={showcase.title}
+                          className="relative w-full rounded-lg shadow-2xl transform group-hover:scale-[1.02] transition-transform duration-500"
+                        />
+                      ) : (
+                        <>
+                          {!loadedShowcaseVideos.has(showcase.id) && (
+                            <div className="absolute inset-0 rounded-lg bg-white/10 animate-pulse z-10" />
+                          )}
+                          <video
+                            key={showcase.id}
+                            src={showcase.image}
+                            poster={acrylicWall}
+                            className="relative w-full rounded-lg shadow-2xl transform group-hover:scale-[1.02] transition-transform duration-500"
+                            style={{ width: '100%', height: 'auto', minHeight: '240px', objectFit: 'cover' }}
+                            preload="auto"
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            onLoadedData={(e) => {
+                              setLoadedShowcaseVideos((prev) => {
+                                const next = new Set(prev);
+                                next.add(showcase.id);
+                                return next;
+                              });
+                              e.currentTarget.play().catch(() => {});
+                            }}
+                            onError={() => {
+                              setFailedShowcaseVideos((prev) => {
+                                const next = new Set(prev);
+                                next.add(showcase.id);
+                                return next;
+                              });
+                            }}
+                            onTimeUpdate={(e) => {
+                              const v = e.currentTarget;
+                              if (v.duration && v.currentTime >= v.duration - 2) {
+                                v.currentTime = 0;
+                                v.play().catch(() => {});
+                              }
+                            }}
+                          />
+                        </>
+                      )}
+                    </div>
                   ) : (
                     <img
                       src={showcase.image}
