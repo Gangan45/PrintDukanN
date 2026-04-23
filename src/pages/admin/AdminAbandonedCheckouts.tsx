@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Phone, MessageCircle, Search, Trash2, RefreshCw, User, MapPin, Package } from "lucide-react";
+import { Loader2, Phone, MessageCircle, Search, Trash2, RefreshCw, User, MapPin, Package, Download } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -179,6 +179,66 @@ const AdminAbandonedCheckouts = () => {
     setBulkDeleteOpen(false);
   };
 
+  const escapeCsv = (val: unknown): string => {
+    if (val === null || val === undefined) return "";
+    const str = String(val);
+    if (/[",\n\r]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+    return str;
+  };
+
+  const handleExportCsv = () => {
+    if (filtered.length === 0) {
+      toast({ title: "Nothing to export", description: "No rows match the current filters." });
+      return;
+    }
+    const headers = [
+      "Created At",
+      "Status",
+      "Full Name",
+      "Phone",
+      "Address",
+      "Landmark",
+      "City",
+      "State",
+      "Pincode",
+      "Items Count",
+      "Items",
+      "Total Amount",
+      "Admin Notes",
+    ];
+    const lines = filtered.map((r) => {
+      const itemsStr = (r.cart_items || [])
+        .map((i) => `${i.product_name || "Product"} x${i.quantity || 1}${i.selected_size ? ` (${i.selected_size})` : ""}`)
+        .join(" | ");
+      return [
+        format(new Date(r.created_at), "yyyy-MM-dd HH:mm"),
+        r.status,
+        r.full_name,
+        r.phone,
+        r.address,
+        r.landmark || "",
+        r.city,
+        r.state,
+        r.pincode,
+        (r.cart_items || []).length,
+        itemsStr,
+        Number(r.total_amount),
+        r.admin_notes || "",
+      ].map(escapeCsv).join(",");
+    });
+    const csv = [headers.join(","), ...lines].join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `abandoned-checkouts-${format(new Date(), "yyyy-MM-dd-HHmm")}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast({ title: "Exported", description: `${filtered.length} rows downloaded` });
+  };
+
   const callCustomer = (phone: string) => {
     window.location.href = `tel:${phone}`;
   };
@@ -214,10 +274,16 @@ const AdminAbandonedCheckouts = () => {
             Customers who filled the address but didn't complete payment. Call them to convert.
           </p>
         </div>
-        <Button onClick={load} variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleExportCsv} variant="outline" disabled={filtered.length === 0}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button onClick={load} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
