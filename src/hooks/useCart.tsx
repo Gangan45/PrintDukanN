@@ -15,6 +15,8 @@ interface CartItem {
   category: string | null;
   unit_price: number;
   product_image?: string;
+  is_free_gift?: boolean;
+  gift_paid_price?: number; // price charged for additional units beyond the 1 free
 }
 
 interface AddToCartParams {
@@ -28,6 +30,8 @@ interface AddToCartParams {
   customText?: string;
   category?: string;
   unitPrice: number;
+  isFreeGift?: boolean;
+  giftPaidPrice?: number;
 }
 
 const CART_STORAGE_KEY = "printdukan_cart";
@@ -74,7 +78,9 @@ export const useCart = () => {
     customImageUrl,
     customText,
     category,
-    unitPrice
+    unitPrice,
+    isFreeGift,
+    giftPaidPrice,
   }: AddToCartParams): Promise<boolean> => {
     // Guard: customizable products MUST be customized first.
     if (requiresCustomization({ category, customImageUrl, customText })) {
@@ -85,6 +91,23 @@ export const useCart = () => {
       });
       if (productId) navigate(getCustomizeUrl(category, productId, productName));
       return false;
+    }
+
+    // Determine if this is a free gift offer
+    const treatAsFreeGift = isFreeGift || (category === "offer-gift" && unitPrice === 0);
+
+    // Rule: only ONE free gift allowed per cart
+    if (treatAsFreeGift) {
+      const currentCart = getCartFromStorage();
+      const existingGift = currentCart.find((it) => it.is_free_gift);
+      if (existingGift) {
+        toast({
+          title: "Free gift already added",
+          description: "Only one free gift is allowed per order.",
+          variant: "destructive",
+        });
+        return false;
+      }
     }
 
     setLoading(true);
@@ -107,13 +130,16 @@ export const useCart = () => {
 
       const currentCart = getCartFromStorage();
 
-      // Check if similar item exists
-      const existingIndex = currentCart.findIndex(
-        item => 
-          item.product_id === productId &&
-          item.selected_size === (selectedSize || null) &&
-          item.selected_frame === (selectedFrame || null)
-      );
+      // Check if similar item exists (skip dedupe for free gifts)
+      const existingIndex = treatAsFreeGift
+        ? -1
+        : currentCart.findIndex(
+            (item) =>
+              item.product_id === productId &&
+              item.selected_size === (selectedSize || null) &&
+              item.selected_frame === (selectedFrame || null) &&
+              !item.is_free_gift
+          );
 
       if (existingIndex >= 0 && productId) {
         // Update quantity
@@ -131,7 +157,11 @@ export const useCart = () => {
           product_name: productName || null,
           category: category || null,
           unit_price: unitPrice,
-          product_image: productImage || undefined
+          product_image: productImage || undefined,
+          is_free_gift: treatAsFreeGift || undefined,
+          gift_paid_price: treatAsFreeGift
+            ? giftPaidPrice ?? undefined
+            : undefined,
         };
         currentCart.push(newItem);
       }
@@ -139,12 +169,14 @@ export const useCart = () => {
       updateCartState(currentCart);
 
       toast({
-        title: "Added to Cart",
-        description: `${productName} added to your cart`
+        title: treatAsFreeGift ? "🎁 Free Gift Added" : "Added to Cart",
+        description: treatAsFreeGift
+          ? `${productName} added free. Extra units will be charged.`
+          : `${productName} added to your cart`,
       });
 
-      // Trigger cart offers popup (async, non-blocking)
-      if (category && category !== "offer-gift") {
+      // Trigger cart offers popup (async, non-blocking) - skip for gifts
+      if (!treatAsFreeGift && category && category !== "offer-gift") {
         window.dispatchEvent(
           new CustomEvent("cart-offer-trigger", { detail: { category, productId } })
         );
@@ -192,8 +224,18 @@ export const useCart = () => {
     return true;
   };
 
+  // For free gifts: 1st unit free, additional units charged at gift_paid_price (or unit_price if set)
+  const getItemSubtotal = (item: CartItem) => {
+    if (item.is_free_gift) {
+      const extraQty = Math.max(0, item.quantity - 1);
+      const paidPrice = item.gift_paid_price ?? item.unit_price ?? 0;
+      return extraQty * paidPrice;
+    }
+    return item.unit_price * item.quantity;
+  };
+
   const getCartTotal = () => {
-    return cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+    return cartItems.reduce((sum, item) => sum + getItemSubtotal(item), 0);
   };
 
   return {
@@ -207,6 +249,7 @@ export const useCart = () => {
     removeFromCart,
     clearCart,
     getCartTotal,
+    getItemSubtotal,
     refreshCart: () => {
       const items = getCartFromStorage();
       setCartItems(items);

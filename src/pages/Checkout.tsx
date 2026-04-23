@@ -113,7 +113,15 @@ const Checkout = () => {
   }, [checkoutItems]);
 
   const activeCoupon = appliedCoupon || passedCoupon;
-  const cartTotal = checkoutItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+  const getLineSubtotal = (item: any) => {
+    if (item?.is_free_gift) {
+      const extraQty = Math.max(0, (item.quantity || 0) - 1);
+      const paidPrice = item.gift_paid_price ?? item.unit_price ?? 0;
+      return extraQty * paidPrice;
+    }
+    return (item.unit_price || 0) * (item.quantity || 0);
+  };
+  const cartTotal = checkoutItems.reduce((sum, item) => sum + getLineSubtotal(item), 0);
   const couponDiscount = activeCoupon?.discountAmount || 0;
   
   // Calculate online payment discount (10%)
@@ -751,9 +759,21 @@ const Checkout = () => {
                         {item.custom_image_url && (
                           <p className="text-[10px] text-primary mt-0.5">Tap photo to preview design</p>
                         )}
-                        <p className="text-sm font-semibold mt-1 text-primary">
-                          ₹{item.unit_price.toLocaleString()} × {item.quantity}
-                        </p>
+                        {(item as any).is_free_gift ? (
+                          <div className="text-sm font-semibold mt-1">
+                            <span className="text-green-600">🎁 1 FREE</span>
+                            {item.quantity > 1 && (
+                              <span className="text-primary ml-2">
+                                + {item.quantity - 1} × ₹
+                                {((item as any).gift_paid_price ?? item.unit_price).toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm font-semibold mt-1 text-primary">
+                            ₹{item.unit_price.toLocaleString()} × {item.quantity}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}

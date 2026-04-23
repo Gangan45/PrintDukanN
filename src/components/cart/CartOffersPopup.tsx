@@ -128,7 +128,13 @@ export const CartOffersPopup = () => {
     setBusyId(item.id);
     try {
       if (item.action_type === "add_to_cart") {
-        await addToCart({
+        const isFreeGift = item.price === 0;
+        // For paid offer items, also treat as "gift-style" if price is 0; only paid extras for true free gifts.
+        const giftPaidPrice = item.original_price && item.original_price > 0
+          ? item.original_price
+          : undefined;
+
+        const ok = await addToCart({
           productId: item.product_id || `offer-${item.id}`,
           productName: item.title,
           productImage: item.image_url,
@@ -136,15 +142,12 @@ export const CartOffersPopup = () => {
           unitPrice: item.price,
           // Use offer-gift category to bypass the customizable check unless admin set a real category
           category: item.category_tag || "offer-gift",
+          isFreeGift,
+          giftPaidPrice,
         });
-        toast({
-          title: item.price === 0 ? "🎁 Gift Added!" : "✨ Added to Cart",
-          description:
-            item.price === 0
-              ? `${item.title} added for FREE.`
-              : `${item.title} added for ₹${item.price}.`,
-        });
-        setOpen(false);
+        if (ok) {
+          setOpen(false);
+        }
       } else {
         // redirect
         setOpen(false);

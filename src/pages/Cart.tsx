@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { cartItems, cartCount, loading, updateQuantity, removeFromCart, getCartTotal } = useCart();
+  const { cartItems, cartCount, loading, updateQuantity, removeFromCart, getCartTotal, getItemSubtotal } = useCart();
   const { appliedCoupon, loading: couponLoading, applyCoupon, removeCoupon } = useCoupon();
   const [couponCode, setCouponCode] = useState("");
 
@@ -108,9 +108,28 @@ const Cart = () => {
                         </p>
                       )}
                     </div>
-                    <p className="font-bold text-primary mt-1.5 sm:mt-2 text-sm sm:text-base">
-                      ₹{item.unit_price.toLocaleString()}
-                    </p>
+                    {(item as any).is_free_gift ? (
+                      <div className="mt-1.5 sm:mt-2 space-y-0.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                            🎁 1st FREE
+                          </span>
+                          <span className="font-bold text-primary text-sm sm:text-base">
+                            ₹{getItemSubtotal(item).toLocaleString()}
+                          </span>
+                        </div>
+                        {((item as any).gift_paid_price ?? item.unit_price) > 0 && (
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
+                            Extra units charged at ₹
+                            {((item as any).gift_paid_price ?? item.unit_price).toLocaleString()} each
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="font-bold text-primary mt-1.5 sm:mt-2 text-sm sm:text-base">
+                        ₹{item.unit_price.toLocaleString()}
+                      </p>
+                    )}
                     
                     {/* Mobile Quantity Controls - below price */}
                     <div className="flex items-center justify-between mt-2 sm:hidden">
