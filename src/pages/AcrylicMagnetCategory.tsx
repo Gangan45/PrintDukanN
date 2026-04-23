@@ -12,7 +12,7 @@ import {
   Magnet,
   Image as ImageIcon,
 } from "lucide-react";
-import showcaseAsset from "@/assets/acrylic-magnet-showcase.mp4.asset.json";
+const showcaseAsset = { url: "/videos/acrylic-magnet-showcase.mp4" };
 import gallery1 from "@/assets/acrylic-magnet-gallery-1.png";
 import gallery2 from "@/assets/acrylic-magnet-gallery-2.png";
 import gallery3 from "@/assets/acrylic-magnet-gallery-3.png";

@@ -15,9 +15,9 @@ import acrylicWall from "@/assets/1-Landscape-Acrylic-Wall-Photo-1.webp";
 import acrylicCollege from "@/assets/collage-1-min-1.webp";
 import { AcrylicFilterBar } from "@/components/acrylic/AcrylicFilterBar";
 import { AcrylicProductGrid } from "@/components/acrylic/AcrylicProductGrid";
-import wallClockShowcase from "@/assets/acrylic-wall-clock-showcase.mp4.asset.json";
-import framedAcrylicShowcase from "@/assets/framed-acrylic-photo-showcase.mp4.asset.json";
-import wallPhotoShowcase from "@/assets/acrylic-wall-photo-showcase.mp4.asset.json";
+const wallClockShowcase = { url: "/videos/acrylic-wall-clock-showcase.mp4" };
+const framedAcrylicShowcase = { url: "/videos/framed-acrylic-photo-showcase.mp4" };
+const wallPhotoShowcase = { url: "/videos/acrylic-wall-photo-showcase.mp4" };
 
 
 interface Product {
