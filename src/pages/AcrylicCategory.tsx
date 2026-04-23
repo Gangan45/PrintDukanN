@@ -17,6 +17,7 @@ import { AcrylicFilterBar } from "@/components/acrylic/AcrylicFilterBar";
 import { AcrylicProductGrid } from "@/components/acrylic/AcrylicProductGrid";
 import wallClockShowcase from "@/assets/acrylic-wall-clock-showcase.mp4.asset.json";
 import framedAcrylicShowcase from "@/assets/framed-acrylic-photo-showcase.mp4.asset.json";
+import wallPhotoShowcase from "@/assets/acrylic-wall-photo-showcase.mp4.asset.json";
 
 
 interface Product {
@@ -47,7 +48,7 @@ const acrylicShowcases = [
     title: "Premium Acrylic Wall Photo",
     subtitle: "Transform Your Walls",
     description: "Experience the brilliance and vibrancy of our acrylic prints, expertly crafted to bring your images to life. Create a captivating visual display that truly reflects your style.",
-    image: "https://rqnknqgpqttjqqhaejmt.supabase.co/storage/v1/object/public/reel-videos/videos/1766938943981-d5vchq.mp4",
+    image: wallPhotoShowcase.url,
     isVideo: true, // Mark this as video
     bgColor: "from-slate-900 to-slate-800",
   },
@@ -155,8 +156,7 @@ const AcrylicCategory = () => {
     const stored = localStorage.getItem('likedReels');
     return stored ? new Set(JSON.parse(stored)) : new Set();
   });
-  const [loadedShowcaseVideos, setLoadedShowcaseVideos] = useState<Set<string>>(new Set());
-  const [failedShowcaseVideos, setFailedShowcaseVideos] = useState<Set<string>>(new Set());
+  const [readyShowcaseVideos, setReadyShowcaseVideos] = useState<Set<string>>(new Set());
 
   // Handle Like Function
   const handleLike = async (e: React.MouseEvent, reelId: string) => {
@@ -228,7 +228,7 @@ const AcrylicCategory = () => {
         const { data, error } = await supabase
           .from("reels")
           .select("*")
-          .eq("category", "acrylic") // Yaha category filter lagaya
+          .eq("category", "acrylic")
           .eq("is_active", true)
           .order("display_order", { ascending: true });
 
@@ -242,6 +242,38 @@ const AcrylicCategory = () => {
     };
 
     fetchAcrylicReels();
+  }, []);
+
+  useEffect(() => {
+    const activeUrls: string[] = [];
+
+    acrylicShowcases.forEach((showcase) => {
+      if (!showcase.isVideo) return;
+
+      const video = document.createElement("video");
+      video.preload = "auto";
+      video.muted = true;
+      video.playsInline = true;
+      video.src = showcase.image;
+
+      const markReady = () => {
+        setReadyShowcaseVideos((prev) => {
+          if (prev.has(showcase.id)) return prev;
+          const next = new Set(prev);
+          next.add(showcase.id);
+          return next;
+        });
+      };
+
+      video.addEventListener("loadeddata", markReady, { once: true });
+      video.addEventListener("canplay", markReady, { once: true });
+      video.load();
+      activeUrls.push(showcase.image);
+    });
+
+    return () => {
+      activeUrls.forEach(() => undefined);
+    };
   }, []);
 
   // Agar database me data nahi hai to fallback data use karein
@@ -346,54 +378,45 @@ const AcrylicCategory = () => {
                   <div className="absolute -inset-4 bg-white/10 rounded-2xl blur-xl group-hover:bg-white/20 transition-all duration-500" />
 
                   {showcase.isVideo ? (
-                    <div className="relative w-full max-w-md mx-auto min-h-[240px]">
-                      {failedShowcaseVideos.has(showcase.id) ? (
-                        <img
-                          src={acrylicWall}
-                          alt={showcase.title}
-                          className="relative w-full rounded-lg shadow-2xl transform group-hover:scale-[1.02] transition-transform duration-500"
-                        />
-                      ) : (
-                        <>
-                          {!loadedShowcaseVideos.has(showcase.id) && (
-                            <div className="absolute inset-0 rounded-lg bg-white/10 animate-pulse z-10" />
-                          )}
-                          <video
-                            key={showcase.id}
-                            src={showcase.image}
-                            poster={acrylicWall}
-                            className="relative w-full rounded-lg shadow-2xl transform group-hover:scale-[1.02] transition-transform duration-500"
-                            style={{ width: '100%', height: 'auto', minHeight: '240px', objectFit: 'cover' }}
-                            preload="auto"
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
-                            onLoadedData={(e) => {
-                              setLoadedShowcaseVideos((prev) => {
-                                const next = new Set(prev);
-                                next.add(showcase.id);
-                                return next;
-                              });
-                              e.currentTarget.play().catch(() => {});
-                            }}
-                            onError={() => {
-                              setFailedShowcaseVideos((prev) => {
-                                const next = new Set(prev);
-                                next.add(showcase.id);
-                                return next;
-                              });
-                            }}
-                            onTimeUpdate={(e) => {
-                              const v = e.currentTarget;
-                              if (v.duration && v.currentTime >= v.duration - 2) {
-                                v.currentTime = 0;
-                                v.play().catch(() => {});
-                              }
-                            }}
-                          />
-                        </>
+                    <div className="relative w-full max-w-md mx-auto min-h-[260px]">
+                      {!readyShowcaseVideos.has(showcase.id) && (
+                        <div className="absolute inset-0 z-10 rounded-lg bg-white/10">
+                          <div className="h-full w-full animate-pulse rounded-lg bg-white/10" />
+                        </div>
                       )}
+                      <video
+                        key={showcase.id}
+                        src={showcase.image}
+                        className={cn(
+                          "relative w-full rounded-lg shadow-2xl transform group-hover:scale-[1.02] transition-transform duration-500",
+                          readyShowcaseVideos.has(showcase.id) ? "opacity-100" : "opacity-0"
+                        )}
+                        style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
+                        preload="auto"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        controls={false}
+                        onCanPlay={(e) => {
+                          setReadyShowcaseVideos((prev) => {
+                            if (prev.has(showcase.id)) return prev;
+                            const next = new Set(prev);
+                            next.add(showcase.id);
+                            return next;
+                          });
+                          e.currentTarget.play().catch(() => {});
+                        }}
+                        onLoadedData={(e) => {
+                          setReadyShowcaseVideos((prev) => {
+                            if (prev.has(showcase.id)) return prev;
+                            const next = new Set(prev);
+                            next.add(showcase.id);
+                            return next;
+                          });
+                          e.currentTarget.play().catch(() => {});
+                        }}
+                      />
                     </div>
                   ) : (
                     <img

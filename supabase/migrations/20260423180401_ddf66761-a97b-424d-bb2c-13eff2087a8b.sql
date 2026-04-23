@@ -1,0 +1,3 @@
+UPDATE public.cart_offer_items SET image_url = '/cart-offers/personalised-keychain.jpg' WHERE id = '7f34f74b-48ec-4d90-8330-a0a2e0691a60';
+UPDATE public.cart_offer_items SET image_url = '/cart-offers/acrylic-photo-8x6.jpg' WHERE id = '5313e356-976e-4847-a6a8-f5153c424c61';
+UPDATE public.cart_offer_items SET image_url = '/cart-offers/fridge-magnets.jpg' WHERE id = '298647c0-2b7b-490b-841f-0ad08c6c0847';

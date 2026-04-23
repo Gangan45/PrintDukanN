@@ -1,0 +1,1 @@
+UPDATE public.hero_banners SET is_active = false;

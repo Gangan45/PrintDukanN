@@ -1,8 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import heroBanner1 from "@/assets/hero-banner-1.png";
-import heroBanner2 from "@/assets/hero-banner-2.png";
+import heroMegaSale from "@/assets/hero-mega-sale.jpg";
+import heroBogo from "@/assets/hero-bogo-offer.jpg";
+import heroGifts from "@/assets/hero-gifts-loved-ones.jpg";
+import heroAcrylic from "@/assets/hero-acrylic-sale.jpg";
+import heroClocks from "@/assets/hero-wall-clocks.jpg";
+import heroBadges from "@/assets/hero-magnetic-badges.jpg";
+import heroTshirts from "@/assets/hero-tshirts.jpg";
+import heroTrophies from "@/assets/hero-trophies.jpg";
 
 interface Banner {
   id: string;
@@ -12,8 +18,14 @@ interface Banner {
 }
 
 const fallbackBanners: Banner[] = [
-  { id: "1", image_url: heroBanner1, alt_text: "Valentine's Sale - Up to 30% OFF", link: "/category/corporate-gifts" },
-  { id: "2", image_url: heroBanner2, alt_text: "12.12 Sale - Discount up to 15%", link: "/category/qr-standee" },
+  { id: "1", image_url: heroMegaSale, alt_text: "Mega Sale - Up to 70% OFF on All Products", link: "/products" },
+  { id: "2", image_url: heroBogo, alt_text: "Buy 1 Get 1 FREE on All Photo Frames", link: "/category/acrylic" },
+  { id: "3", image_url: heroGifts, alt_text: "Perfect Personalized Gifts for Loved Ones from ₹199", link: "/category/corporate-gifts" },
+  { id: "4", image_url: heroAcrylic, alt_text: "Personalized Acrylic Photo Frames - Up to 40% OFF", link: "/category/acrylic" },
+  { id: "5", image_url: heroClocks, alt_text: "Custom Photo Wall Clocks from ₹499", link: "/category/wall-clocks" },
+  { id: "6", image_url: heroBadges, alt_text: "Professional Magnetic Badges from ₹149", link: "/category/acrylic-magnet" },
+  { id: "7", image_url: heroTshirts, alt_text: "Custom T-Shirt Printing from ₹299", link: "/category/t-shirts" },
+  { id: "8", image_url: heroTrophies, alt_text: "Trophies & Awards from ₹399", link: "/category/trophies" },
 ];
 
 export const HeroSection = () => {
@@ -46,7 +58,13 @@ export const HeroSection = () => {
         <div className="flex transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
           {banners.map((banner) => (
             <Link key={banner.id} to={banner.link} className="w-full flex-shrink-0">
-              <img src={banner.image_url} alt={banner.alt_text} className="w-full h-auto object-cover" />
+              <img
+                src={banner.image_url}
+                alt={banner.alt_text}
+                className="w-full aspect-[16/9] sm:aspect-[16/9] lg:aspect-[16/7] object-contain sm:object-cover object-center block bg-background"
+                width={1920}
+                height={576}
+              />
             </Link>
           ))}
         </div>

@@ -96,14 +96,16 @@ export const useCart = () => {
     // Determine if this is a free gift offer
     const treatAsFreeGift = isFreeGift || (category === "offer-gift" && unitPrice === 0);
 
-    // Rule: only ONE free gift allowed per cart
+    // Rule: only ONE free gift allowed PER PRODUCT (same productId can't be added twice as free gift)
     if (treatAsFreeGift) {
       const currentCart = getCartFromStorage();
-      const existingGift = currentCart.find((it) => it.is_free_gift);
-      if (existingGift) {
+      const existingGiftForProduct = currentCart.find(
+        (it) => it.is_free_gift && it.product_id === productId
+      );
+      if (existingGiftForProduct) {
         toast({
           title: "Free gift already added",
-          description: "Only one free gift is allowed per order.",
+          description: "This free gift is already in your cart.",
           variant: "destructive",
         });
         return false;

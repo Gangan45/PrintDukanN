@@ -18,6 +18,7 @@ import { StatsCounter } from "@/components/sections/StatsCounter";
 import { HowItWorks } from "@/components/sections/HowItWorks";
 import { SpecialOffers } from "@/components/sections/SpecialOffers";
 import { ProcessGuarantee } from "@/components/sections/ProcessGuarantee";
+import { MagneticBadgeSection } from "@/components/sections/MagneticBadgeSection";
 
 const Index = () => {
   return (
@@ -34,6 +35,7 @@ const Index = () => {
         <FeaturedProducts />
         <SpecialOffers />
         <CorporateGifts />
+        <MagneticBadgeSection />
         <HowItWorks />
         <TrophiesMementos />
         <CategoryProducts />

@@ -28,6 +28,7 @@ const acrylicSubcategories = [
 const navLinks = [
   { name: "Name Plates", href: "/category/name-plates" },
   { name: "QR Standee", href: "/category/qr-standee" },
+  { name: "Magnetic Badge", href: "/category/acrylic-magnet" },
   { name: "Trophies", href: "/category/trophies" },
   { name: "Wedding Card", href: "/category/wedding-card" },
   { name: "Corporate Gifts", href: "/category/corporate-gifts" },
